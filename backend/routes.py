@@ -5,6 +5,7 @@ import requests as http_requests
 routes = Blueprint('routes', __name__)
 
 
+
 # ── 1. Budget Breakdown ──────────────────────────────────────────────────────
 @routes.route('/api/budget', methods=['POST'])
 def budget():
@@ -158,17 +159,25 @@ def currency():
     data = request.json
     amount = float(data.get('amount', 0))
     from_currency = data.get('from_currency', 'USD').upper()
-    to_currency = data.get('to_currency', 'EUR').upper()
+    to_currency = data.get('to_currency', 'PKR').upper()
 
     if amount <= 0:
         return jsonify({'error': 'Amount must be positive'}), 400
 
     try:
-        api_url = f"https://api.frankfurter.app/latest?from={from_currency}&to={to_currency}"
+        api_url = f"https://open.er-api.com/v6/latest/{from_currency}"
         response = http_requests.get(api_url, timeout=15)
         fx_data = response.json()
-        rate = fx_data['rates'][to_currency]
+        
+        if fx_data.get('result') != 'success':
+            return jsonify({'error': 'Could not fetch exchange rates.'}), 500
+            
+        rate = fx_data['rates'].get(to_currency)
+        if not rate:
+            return jsonify({'error': f'{to_currency} is not supported.'}), 400
+            
         converted = round(amount * rate, 2)
+        rate = round(rate, 4)
     except Exception:
         return jsonify({'error': 'Could not fetch exchange rates. Please try again.'}), 500
 
@@ -179,7 +188,6 @@ def currency():
         'rate': rate,
         'converted': converted
     })
-
 
 # ── 7. Net Worth Tracker ─────────────────────────────────────────────────────
 @routes.route('/api/networth', methods=['POST'])
@@ -277,6 +285,24 @@ def investment():
         'ai_insight': ai_insight
     })
 
+# ── 10. AI Chat ──────────────────────────────────────────────────────────────
+@routes.route('/api/chat', methods=['POST'])
+def chat():
+    data = request.json
+    message = data.get('message', '').strip()
+
+    if not message:
+        return jsonify({'error': 'Message cannot be empty'}), 400
+
+    prompt = f"""
+    You are a helpful financial assistant. Answer the following question in a friendly, 
+    clear, and practical way (3-5 sentences max). Focus only on financial advice.
+    
+    User question: {message}
+    """
+    reply = get_ai_response(prompt)
+
+    return jsonify({'reply': reply})
 
 # ── Health check ─────────────────────────────────────────────────────────────
 @routes.route('/api/ping', methods=['GET'])

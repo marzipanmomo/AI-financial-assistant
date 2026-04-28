@@ -1,26 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function BillSplitter() {
-  const [total, setTotal] = useState("");
-  const [people, setPeople] = useState("");
-  const [tipPercent, setTipPercent] = useState("0");
+  const [total, setTotal] = useState(() => localStorage.getItem("split_total") || "");
+  const [people, setPeople] = useState(() => localStorage.getItem("split_people") || "");
+  const [tipPercent, setTipPercent] = useState(() => localStorage.getItem("split_tip") || "0");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => { localStorage.setItem("split_total", total); }, [total]);
+  useEffect(() => { localStorage.setItem("split_people", people); }, [people]);
+  useEffect(() => { localStorage.setItem("split_tip", tipPercent); }, [tipPercent]);
 
   const handleSubmit = async () => {
+    if (!total || parseFloat(total) <= 0) { setError("Please enter a valid bill total."); return; }
+    if (!people || parseInt(people) < 2) { setError("Please enter at least 2 people."); return; }
+    setError("");
     setLoading(true);
-    const res = await fetch("http://localhost:5000/api/split", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        total: parseFloat(total),
-        people: parseInt(people),
-        tip_percent: parseFloat(tipPercent) || 0,
-      }),
-    });
-    const data = await res.json();
-    setResult(data);
-    setLoading(false);
+    try {
+      const res = await fetch("http://localhost:5000/api/split", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          total: parseFloat(total),
+          people: parseInt(people),
+          tip_percent: parseFloat(tipPercent) || 0,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) { setError(data.error); setResult(null); }
+      else setResult(data);
+    } catch {
+      setError("Could not connect to the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const TIP_PRESETS = ["0", "10", "15", "18", "20", "25"];
@@ -33,30 +47,15 @@ function BillSplitter() {
       <div className="input-row">
         <div className="input-group">
           <label className="input-label">Bill Total ($)</label>
-          <input
-            type="number"
-            placeholder="e.g. 120"
-            value={total}
-            onChange={(e) => setTotal(e.target.value)}
-          />
+          <input type="number" placeholder="e.g. 120" value={total} onChange={(e) => setTotal(e.target.value)} />
         </div>
         <div className="input-group">
           <label className="input-label">Number of People</label>
-          <input
-            type="number"
-            placeholder="e.g. 4"
-            value={people}
-            onChange={(e) => setPeople(e.target.value)}
-          />
+          <input type="number" placeholder="e.g. 4" value={people} onChange={(e) => setPeople(e.target.value)} />
         </div>
         <div className="input-group">
           <label className="input-label">Tip (%)</label>
-          <input
-            type="number"
-            placeholder="e.g. 15"
-            value={tipPercent}
-            onChange={(e) => setTipPercent(e.target.value)}
-          />
+          <input type="number" placeholder="e.g. 15" value={tipPercent} onChange={(e) => setTipPercent(e.target.value)} />
         </div>
       </div>
 
@@ -69,9 +68,9 @@ function BillSplitter() {
               padding: "6px 14px",
               borderRadius: "20px",
               border: "1.5px solid",
-              borderColor: tipPercent === t ? "#1a6b2f" : "#d0e8d0",
-              background: tipPercent === t ? "#1a6b2f" : "white",
-              color: tipPercent === t ? "white" : "#1a6b2f",
+              borderColor: tipPercent === t ? "var(--accent)" : "var(--border-accent)",
+              background: tipPercent === t ? "var(--accent)" : "transparent",
+              color: tipPercent === t ? "#000" : "var(--accent)",
               fontSize: "13px",
               fontWeight: "600",
               cursor: "pointer",
@@ -87,7 +86,10 @@ function BillSplitter() {
         {loading ? "Splitting..." : "Split Bill"}
       </button>
 
-      {result && !result.error && (
+      {loading && <p className="loading">Calculating...</p>}
+      {error && <p className="error-msg">{error}</p>}
+
+      {result && (
         <div>
           <div className="result-grid" style={{ marginTop: "24px" }}>
             <div className="result-card">
@@ -108,17 +110,13 @@ function BillSplitter() {
             </div>
           </div>
 
-          <div className="ai-insight" style={{ background: "#f0f7f0", borderLeft: "4px solid #27ae60" }}>
+          <div className="ai-insight" style={{ marginTop: "20px" }}>
             <div className="ai-label">✦ Summary</div>
             <p>
-              Split between <strong>{result.people} people</strong> — each person pays <strong>${result.per_person}</strong> including a {result.tip_percent}% tip.
+              Split between <strong>{result.people} people</strong> — each pays <strong>${result.per_person}</strong> including a {result.tip_percent}% tip.
             </p>
           </div>
         </div>
-      )}
-
-      {result && result.error && (
-        <p style={{ color: "red", marginTop: "12px" }}>{result.error}</p>
       )}
     </div>
   );

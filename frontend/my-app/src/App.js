@@ -8,6 +8,8 @@ import Loan from "./Loan";
 import NetWorth from "./NetWorth";
 import BillSplitter from "./BillSplitter";
 import Investment from "./Investment";
+import Chat from "./Chat";
+import Currency from "./Currency";
 import "./App.css";
 
 function NavLink({ to, children }) {
@@ -66,6 +68,16 @@ function Home() {
           <div className="card-title">Investment</div>
           <div className="card-desc">Calculate ROI & returns</div>
         </Link>
+        <Link to="/chat" className="home-card">
+          <div className="card-icon">✦</div>
+          <div className="card-title">AI Chat</div>
+          <div className="card-desc">Ask anything about finance</div>
+        </Link>
+        <Link to="/currency" className="home-card">
+          <div className="card-icon">💱</div>
+          <div className="card-title">Currency</div>
+          <div className="card-desc">Convert world currencies</div>
+        </Link>
       </div>
     </div>
   );
@@ -90,6 +102,8 @@ function App() {
             <NavLink to="/networth">Net Worth</NavLink>
             <NavLink to="/split">Bill Split</NavLink>
             <NavLink to="/investment">Investment</NavLink>
+            <NavLink to="/chat">AI Chat</NavLink>
+            <NavLink to="/currency">Currency</NavLink>
           </ul>
         </nav>
         <div className="main-content">
@@ -103,6 +117,8 @@ function App() {
             <Route path="/networth" element={<NetWorth />} />
             <Route path="/split" element={<BillSplitter />} />
             <Route path="/investment" element={<Investment />} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/currency" element={<Currency />} />
           </Routes>
         </div>
       </div>

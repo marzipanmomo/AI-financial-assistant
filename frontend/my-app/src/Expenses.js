@@ -1,20 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function Expenses() {
-  const [items, setItems] = useState("");
+  const [items, setItems] = useState(() => localStorage.getItem("expenses_items") || "");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => { localStorage.setItem("expenses_items", items); }, [items]);
 
   const handleSubmit = async () => {
+    if (!items.trim()) { setError("Please enter some purchases."); return; }
+    setError("");
     setLoading(true);
-    const res = await fetch("http://localhost:5000/api/expenses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ purchases: items }),
-    });
-    const data = await res.json();
-    setResult(data.ai_analysis);
-    setLoading(false);
+    try {
+      const res = await fetch("http://localhost:5000/api/expenses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ purchases: items }),
+      });
+      const data = await res.json();
+      if (data.error) { setError(data.error); setResult(""); }
+      else setResult(data.ai_analysis);
+    } catch {
+      setError("Could not connect to the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,6 +48,7 @@ function Expenses() {
       </button>
 
       {loading && <p className="loading">AI is analyzing your spending patterns...</p>}
+      {error && <p className="error-msg">{error}</p>}
 
       {result && (
         <div className="ai-insight" style={{ marginTop: "24px" }}>

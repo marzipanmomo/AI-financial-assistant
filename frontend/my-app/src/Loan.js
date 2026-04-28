@@ -1,26 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function Loan() {
-  const [principal, setPrincipal] = useState("");
-  const [annualRate, setAnnualRate] = useState("");
-  const [months, setMonths] = useState("");
+  const [principal, setPrincipal] = useState(() => localStorage.getItem("loan_principal") || "");
+  const [annualRate, setAnnualRate] = useState(() => localStorage.getItem("loan_rate") || "");
+  const [months, setMonths] = useState(() => localStorage.getItem("loan_months") || "");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => { localStorage.setItem("loan_principal", principal); }, [principal]);
+  useEffect(() => { localStorage.setItem("loan_rate", annualRate); }, [annualRate]);
+  useEffect(() => { localStorage.setItem("loan_months", months); }, [months]);
 
   const handleSubmit = async () => {
+    if (!principal || parseFloat(principal) <= 0) { setError("Please enter a valid loan amount."); return; }
+    if (!months || parseInt(months) <= 0) { setError("Please enter a valid duration."); return; }
+    setError("");
     setLoading(true);
-    const res = await fetch("http://localhost:5000/api/loan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        principal: parseFloat(principal),
-        annual_rate: parseFloat(annualRate) || 0,
-        months: parseInt(months),
-      }),
-    });
-    const data = await res.json();
-    setResult(data);
-    setLoading(false);
+    try {
+      const res = await fetch("http://localhost:5000/api/loan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          principal: parseFloat(principal),
+          annual_rate: parseFloat(annualRate) || 0,
+          months: parseInt(months),
+        }),
+      });
+      const data = await res.json();
+      if (data.error) { setError(data.error); setResult(null); }
+      else setResult(data);
+    } catch {
+      setError("Could not connect to the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -31,30 +45,15 @@ function Loan() {
       <div className="input-row">
         <div className="input-group">
           <label className="input-label">Loan Amount ($)</label>
-          <input
-            type="number"
-            placeholder="e.g. 10000"
-            value={principal}
-            onChange={(e) => setPrincipal(e.target.value)}
-          />
+          <input type="number" placeholder="e.g. 10000" value={principal} onChange={(e) => setPrincipal(e.target.value)} />
         </div>
         <div className="input-group">
           <label className="input-label">Annual Interest Rate (%)</label>
-          <input
-            type="number"
-            placeholder="e.g. 8.5"
-            value={annualRate}
-            onChange={(e) => setAnnualRate(e.target.value)}
-          />
+          <input type="number" placeholder="e.g. 8.5" value={annualRate} onChange={(e) => setAnnualRate(e.target.value)} />
         </div>
         <div className="input-group">
           <label className="input-label">Duration (months)</label>
-          <input
-            type="number"
-            placeholder="e.g. 24"
-            value={months}
-            onChange={(e) => setMonths(e.target.value)}
-          />
+          <input type="number" placeholder="e.g. 24" value={months} onChange={(e) => setMonths(e.target.value)} />
         </div>
       </div>
 
@@ -63,8 +62,9 @@ function Loan() {
       </button>
 
       {loading && <p className="loading">Crunching the numbers...</p>}
+      {error && <p className="error-msg">{error}</p>}
 
-      {result && !result.error && (
+      {result && (
         <div>
           <div className="result-grid">
             <div className="result-card highlight">
@@ -92,10 +92,6 @@ function Loan() {
             </div>
           )}
         </div>
-      )}
-
-      {result && result.error && (
-        <p style={{ color: "red", marginTop: "12px" }}>{result.error}</p>
       )}
     </div>
   );

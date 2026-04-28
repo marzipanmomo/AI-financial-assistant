@@ -3,13 +3,21 @@ import React, { useState } from "react";
 function Tips() {
   const [tip, setTip] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleClick = async () => {
+    setError("");
     setLoading(true);
-    const res = await fetch("http://localhost:5000/api/tips");
-    const data = await res.json();
-    setTip(data.tip);
-    setLoading(false);
+    try {
+      const res = await fetch("http://localhost:5000/api/tips");
+      const data = await res.json();
+      if (data.error) setError(data.error);
+      else setTip(data.tip);
+    } catch {
+      setError("Could not connect to the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -22,6 +30,7 @@ function Tips() {
       </button>
 
       {loading && <p className="loading">Fetching your daily wisdom...</p>}
+      {error && <p className="error-msg">{error}</p>}
 
       {tip && (
         <div className="tip-card">

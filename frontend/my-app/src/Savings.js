@@ -1,26 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function Savings() {
-  const [goalAmount, setGoalAmount] = useState("");
-  const [months, setMonths] = useState("");
-  const [currentSavings, setCurrentSavings] = useState("");
+  const [goalAmount, setGoalAmount] = useState(() => localStorage.getItem("sav_goal") || "");
+  const [months, setMonths] = useState(() => localStorage.getItem("sav_months") || "");
+  const [currentSavings, setCurrentSavings] = useState(() => localStorage.getItem("sav_current") || "");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => { localStorage.setItem("sav_goal", goalAmount); }, [goalAmount]);
+  useEffect(() => { localStorage.setItem("sav_months", months); }, [months]);
+  useEffect(() => { localStorage.setItem("sav_current", currentSavings); }, [currentSavings]);
 
   const handleSubmit = async () => {
+    if (!goalAmount || parseFloat(goalAmount) <= 0) { setError("Please enter a valid savings goal."); return; }
+    if (!months || parseInt(months) <= 0) { setError("Please enter a valid timeframe."); return; }
+    setError("");
     setLoading(true);
-    const res = await fetch("http://localhost:5000/api/savings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        goal_amount: parseFloat(goalAmount),
-        months: parseInt(months),
-        current_savings: parseFloat(currentSavings) || 0,
-      }),
-    });
-    const data = await res.json();
-    setResult(data);
-    setLoading(false);
+    try {
+      const res = await fetch("http://localhost:5000/api/savings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          goal_amount: parseFloat(goalAmount),
+          months: parseInt(months),
+          current_savings: parseFloat(currentSavings) || 0,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) { setError(data.error); setResult(null); }
+      else setResult(data);
+    } catch {
+      setError("Could not connect to the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -31,30 +45,15 @@ function Savings() {
       <div className="input-row">
         <div className="input-group">
           <label className="input-label">Savings Goal ($)</label>
-          <input
-            type="number"
-            placeholder="e.g. 5000"
-            value={goalAmount}
-            onChange={(e) => setGoalAmount(e.target.value)}
-          />
+          <input type="number" placeholder="e.g. 5000" value={goalAmount} onChange={(e) => setGoalAmount(e.target.value)} />
         </div>
         <div className="input-group">
           <label className="input-label">Timeframe (months)</label>
-          <input
-            type="number"
-            placeholder="e.g. 12"
-            value={months}
-            onChange={(e) => setMonths(e.target.value)}
-          />
+          <input type="number" placeholder="e.g. 12" value={months} onChange={(e) => setMonths(e.target.value)} />
         </div>
         <div className="input-group">
           <label className="input-label">Current Savings ($)</label>
-          <input
-            type="number"
-            placeholder="e.g. 500"
-            value={currentSavings}
-            onChange={(e) => setCurrentSavings(e.target.value)}
-          />
+          <input type="number" placeholder="e.g. 500" value={currentSavings} onChange={(e) => setCurrentSavings(e.target.value)} />
         </div>
       </div>
 
@@ -63,6 +62,7 @@ function Savings() {
       </button>
 
       {loading && <p className="loading">Building your savings plan...</p>}
+      {error && <p className="error-msg">{error}</p>}
 
       {result && (
         <div>
