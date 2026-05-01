@@ -22,6 +22,25 @@ function NavLink({ to, children }) {
   );
 }
 
+function ThemeToggle() {
+  const [theme, setTheme] = React.useState(
+    localStorage.getItem("theme") || "dark"
+  );
+
+  React.useEffect(() => {
+    document.documentElement.className = theme;
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  return (
+    <button
+    className="btn-secondary theme-toggle"
+    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+    {theme === "dark" ? "🌞 Light" : "🌙 Dark"}
+    </button>
+  );
+}
+
 function Home() {
   return (
     <div className="home-hero">
@@ -105,6 +124,7 @@ function App() {
             <NavLink to="/chat">AI Chat</NavLink>
             <NavLink to="/currency">Currency</NavLink>
           </ul>
+          <ThemeToggle />
         </nav>
         <div className="main-content">
           <Routes>

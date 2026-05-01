@@ -1,6 +1,8 @@
-import os
-from groq import Groq
+import os #lets you access environment variables (API keys)
+from groq import Groq #python client for groq's ai models
 
+#create groq client using your api key
+#stores in environment variable GROQ_API_KEY
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 def get_ai_response(prompt: str) -> str:
