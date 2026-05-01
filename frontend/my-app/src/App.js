@@ -108,46 +108,46 @@ function App() {
   const location = useLocation();
 
   return (
-    <div className="app-container">
-      <nav className="navbar">
-        <Link to="/" className="navbar-brand">
-          <div className="logo-icon">$</div>
-          FinanceAI
-        </Link>
-        <ul className="navbar-links">
-          <NavLink to="/">Home</NavLink>
-          <NavLink to="/budget">Budget</NavLink>
-          <NavLink to="/expenses">Expenses</NavLink>
-          <NavLink to="/savings">Savings</NavLink>
-          <NavLink to="/tips">Tips</NavLink>
-          <NavLink to="/loan">Loan</NavLink>
-          <NavLink to="/networth">Net Worth</NavLink>
-          <NavLink to="/split">Bill Split</NavLink>
-          <NavLink to="/investment">Investment</NavLink>
-          <NavLink to="/chat">AI Chat</NavLink>
-          <NavLink to="/currency">Currency</NavLink>
-        </ul>
-        <ThemeToggle />
-      </nav>
+      <div className="app-container">
+        <nav className="navbar">
+          <Link to="/" className="navbar-brand">
+            <div className="logo-icon">$</div>
+            FinanceAI
+          </Link>
+          <ul className="navbar-links">
+            <NavLink to="/">Home</NavLink>
+            <NavLink to="/budget">Budget</NavLink>
+            <NavLink to="/expenses">Expenses</NavLink>
+            <NavLink to="/savings">Savings</NavLink>
+            <NavLink to="/tips">Tips</NavLink>
+            <NavLink to="/loan">Loan</NavLink>
+            <NavLink to="/networth">Net Worth</NavLink>
+            <NavLink to="/split">Bill Split</NavLink>
+            <NavLink to="/investment">Investment</NavLink>
+            <NavLink to="/chat">AI Chat</NavLink>
+            <NavLink to="/currency">Currency</NavLink>
+          </ul>
+          <ThemeToggle />
+        </nav>
 
-      <div className="main-content">
-        <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-            <Route path="/budget" element={<PageTransition><Budget /></PageTransition>} />
-            <Route path="/expenses" element={<PageTransition><Expenses /></PageTransition>} />
-            <Route path="/savings" element={<PageTransition><Savings /></PageTransition>} />
-            <Route path="/tips" element={<PageTransition><Tips /></PageTransition>} />
-            <Route path="/loan" element={<PageTransition><Loan /></PageTransition>} />
-            <Route path="/networth" element={<PageTransition><NetWorth /></PageTransition>} />
-            <Route path="/split" element={<PageTransition><BillSplitter /></PageTransition>} />
-            <Route path="/investment" element={<PageTransition><Investment /></PageTransition>} />
-            <Route path="/chat" element={<PageTransition><Chat /></PageTransition>} />
-            <Route path="/currency" element={<PageTransition><Currency /></PageTransition>} />
-          </Routes>
-        </AnimatePresence>
+        <div className="main-content">
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+              <Route path="/budget" element={<PageTransition><Budget /></PageTransition>} />
+              <Route path="/expenses" element={<PageTransition><Expenses /></PageTransition>} />
+              <Route path="/savings" element={<PageTransition><Savings /></PageTransition>} />
+              <Route path="/tips" element={<PageTransition><Tips /></PageTransition>} />
+              <Route path="/loan" element={<PageTransition><Loan /></PageTransition>} />
+              <Route path="/networth" element={<PageTransition><NetWorth /></PageTransition>} />
+              <Route path="/split" element={<PageTransition><BillSplitter /></PageTransition>} />
+              <Route path="/investment" element={<PageTransition><Investment /></PageTransition>} />
+              <Route path="/chat" element={<PageTransition><Chat /></PageTransition>} />
+              <Route path="/currency" element={<PageTransition><Currency /></PageTransition>} />
+            </Routes>
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
   );
 }
 
