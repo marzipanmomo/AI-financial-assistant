@@ -5,6 +5,7 @@ import Skeleton from './Skeleton';
 import { useToast } from './Toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { playClick } from "./sound.js";
 
 const PIE_COLORS = ["#00ff88","#00bcd4","#f59e0b","#e91e63","#9c27b0","#3f51b5","#009688","#ff5722"];
 
@@ -107,7 +108,7 @@ function Budget() {
       <div className="result-header">
         <h1 className="page-title">Budget Calculator</h1>
         {result && (
-          <button className="btn-secondary export-btn" onClick={exportToPDF}>
+          <button className="btn-secondary export-btn" onClick={exportToPDF}  onClick={playClick}>
             📄 Export PDF
           </button>
         )}
@@ -125,13 +126,13 @@ function Budget() {
         <div key={index} className="expense-row">
           <input type="text" placeholder="Category (e.g. Rent)" value={expense.name} onChange={(e) => updateExpense(index, "name", e.target.value)} />
           <input type="number" placeholder="Amount ($)" value={expense.amount} onChange={(e) => updateExpense(index, "amount", e.target.value)} />
-          <button className="btn-danger" onClick={() => removeExpense(index)}>Remove</button>
+          <button className="btn-danger" onClick={() => removeExpense(index)} onClick={playClick}>Remove</button>
         </div>
       ))}
 
       <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
-        <button className="btn-secondary" onClick={addExpense}>+ Add Expense</button>
-        <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
+        <button className="btn-secondary" onClick={addExpense}  onClick={playClick}>+ Add Expense</button>
+        <button className="btn-primary" onClick={handleSubmit} disabled={loading}  onClick={playClick}>
           {loading ? "Calculating..." : "Calculate"}
         </button>
       </div>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { playClick } from "./sound.js";
 
 function Tips() {
   const [tip, setTip] = useState("");
@@ -25,7 +26,7 @@ function Tips() {
       <h1 className="page-title">Financial Tips</h1>
       <p className="page-subtitle">Get a fresh AI-generated financial tip to guide your day.</p>
 
-      <button className="btn-primary" onClick={handleClick} disabled={loading}>
+      <button className="btn-primary" onClick={handleClick} disabled={loading} onClick={playClick}>
         {loading ? "Generating..." : "✦ Get Tip of the Day"}
       </button>
 

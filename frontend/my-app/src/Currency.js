@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { playClick } from "./sound.js";
 
 const CURRENCIES = ["USD","EUR","GBP","JPY","CAD","AUD","CHF","CNY","INR","PKR","MXN","BRL","SGD","HKD","NOK","SEK","DKK","NZD","ZAR","AED"];
 
@@ -59,7 +60,7 @@ function Currency() {
             {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
           </select>
         </div>
-        <button className="btn-secondary swap-btn" onClick={handleSwap} title="Swap currencies">⇄</button>
+        <button className="btn-secondary swap-btn" onClick={handleSwap} title="Swap currencies"  onClick={playClick}>⇄</button>
         <div className="input-group" style={{ flex: 1 }}>
           <label className="input-label">To</label>
           <select value={toCurrency} onChange={(e) => setToCurrency(e.target.value)}>
@@ -68,7 +69,7 @@ function Currency() {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
+      <button className="btn-primary" onClick={handleSubmit} disabled={loading}  onClick={playClick}>
         {loading ? "Converting..." : "Convert"}
       </button>
 

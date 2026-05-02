@@ -3,6 +3,7 @@ import { useCountUp } from './useCountUp';
 import { useToast } from './Toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { playClick } from "./sound.js";
 
 // Animated value component
 function AnimatedValue({ value, prefix = "$", suffix = "" }) {
@@ -77,7 +78,7 @@ function Expenses() {
       <div className="result-header">
         <h2 className="page-title">Expense Tracker</h2>
         {expenses.length > 0 && (
-          <button className="btn-secondary export-btn" onClick={exportToPDF}>
+          <button className="btn-secondary export-btn" onClick={exportToPDF}  onClick={playClick}>
             📄 Export PDF
           </button>
         )}
@@ -103,7 +104,7 @@ function Expenses() {
         />
       </div>
 
-      <button onClick={addExpense} className="btn-primary">Add Expense</button>
+      <button onClick={addExpense} className="btn-primary"  onClick={playClick}>Add Expense</button>
 
       <div id="expenses-results">
         <div className="result-card" style={{ marginTop: "24px" }}>
@@ -119,7 +120,8 @@ function Expenses() {
               <li key={exp.id}>
                 <span className="item-name">{exp.category}</span>
                 <span className="item-amount">${exp.amount.toFixed(2)}</span>
-                <button className="btn-danger" style={{ padding: "4px 12px", fontSize: "12px" }} onClick={() => deleteExpense(exp.id)}>Delete</button>
+                <button className="btn-danger" style={{ padding: "4px 12px", fontSize: "12px" }} 
+                onClick={() => deleteExpense(exp.id)} onClick={playClick}>Delete</button>
               </li>
             ))}
           </ul>

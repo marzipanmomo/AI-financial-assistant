@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { playClick } from "./sound.js";
 
 function Login({ onLogin }) {
   const [isSignup, setIsSignup] = useState(false);
@@ -158,6 +159,7 @@ function Login({ onLogin }) {
 
           <button
             onClick={handleSubmit}
+            onClick={playClick}
             disabled={loading}
             style={{
               width: "100%", background: "#00ff88", color: "#000",

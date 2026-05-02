@@ -5,6 +5,7 @@ import Skeleton from './Skeleton';
 import { useToast } from './Toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { playClick } from "./sound.js";
 
 // Animated value component
 function AnimatedValue({ value, prefix = "$", suffix = "" }) {
@@ -108,7 +109,7 @@ function Investment() {
       <div className="result-header">
         <h1 className="page-title">Investment Returns</h1>
         {result && (
-          <button className="btn-secondary export-btn" onClick={exportToPDF}>
+          <button className="btn-secondary export-btn" onClick={exportToPDF}  onClick={playClick}>
             📄 Export PDF
           </button>
         )}
@@ -134,7 +135,7 @@ function Investment() {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
+      <button className="btn-primary" onClick={handleSubmit} disabled={loading} onClick={playClick}>
         {loading ? "Calculating..." : "Calculate Returns"}
       </button>
 

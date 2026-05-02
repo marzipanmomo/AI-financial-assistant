@@ -4,6 +4,7 @@ import Skeleton from './Skeleton';
 import { useToast } from './Toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { playClick } from "./sound.js";
 
 function AnimatedValue({ value, prefix = "$" }) {
   const displayValue = useCountUp(value, 600);
@@ -97,7 +98,7 @@ function Savings() {
       <div className="result-header">
         <h1 className="page-title">Savings Goal Planner</h1>
         {result && (
-          <button className="btn-secondary export-btn" onClick={exportToPDF}>
+          <button className="btn-secondary export-btn" onClick={exportToPDF}  onClick={playClick}>
             📄 Export PDF
           </button>
         )}
@@ -119,7 +120,7 @@ function Savings() {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
+      <button className="btn-primary" onClick={handleSubmit} disabled={loading} onClick={playClick}>
         {loading ? "Planning..." : "Create My Plan"}
       </button>
 

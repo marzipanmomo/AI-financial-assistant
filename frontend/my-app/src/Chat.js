@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { playClick } from "./sound.js";
 
 export default function Chat() {
   const [messages, setMessages] = useState([
@@ -106,7 +107,7 @@ export default function Chat() {
       
       <div className="chat-suggestions">
         {suggestions.map((s, i) => (
-          <button key={i} className="suggestion-chip" onClick={() => sendMessage(s)}>
+          <button key={i} className="suggestion-chip" onClick={() => sendMessage(s)} onClick={playClick}>
             {s}
           </button>
         ))}
@@ -150,7 +151,7 @@ export default function Chat() {
           disabled={isLoading}
           className="input-field"
         />
-        <button onClick={() => sendMessage()} disabled={isLoading || !input.trim()} className="btn-primary">
+        <button onClick={() => sendMessage()} disabled={isLoading || !input.trim()} className="btn-primary"  onClick={playClick}>
           Send
         </button>
       </div>

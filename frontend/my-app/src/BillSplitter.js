@@ -4,6 +4,7 @@ import Skeleton from './Skeleton';
 import { useToast } from './Toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { playClick } from "./sound.js";
 
 // Animated value component
 function AnimatedValue({ value, prefix = "$" }) {
@@ -128,6 +129,7 @@ function BillSplitter() {
           <button
             key={t}
             onClick={() => setTipPercent(t)}
+            onClick={playClick}
             style={{
               padding: "6px 14px",
               borderRadius: "20px",
@@ -146,7 +148,7 @@ function BillSplitter() {
         ))}
       </div>
 
-      <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
+      <button className="btn-primary" onClick={handleSubmit} disabled={loading}  onClick={playClick}>
         {loading ? "Splitting..." : "Split Bill"}
       </button>
 

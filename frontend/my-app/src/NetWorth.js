@@ -4,6 +4,7 @@ import Skeleton from './Skeleton';
 import { useToast } from './Toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { playClick } from "./sound.js";
 
 // Animated value component
 function AnimatedValue({ value, prefix = "$", suffix = "" }) {
@@ -106,7 +107,7 @@ function NetWorth() {
       <div key={index} className="expense-row">
         <input type="text" placeholder={placeholder} value={item.name} onChange={(e) => updateRow(list, setList, index, "name", e.target.value)} />
         <input type="number" placeholder="Amount ($)" value={item.amount} onChange={(e) => updateRow(list, setList, index, "amount", e.target.value)} />
-        <button className="btn-danger" onClick={() => removeRow(list, setList, index)}>Remove</button>
+        <button className="btn-danger" onClick={() => removeRow(list, setList, index)}  onClick={playClick}>Remove</button>
       </div>
     ));
 
@@ -117,7 +118,7 @@ function NetWorth() {
       <div className="result-header">
         <h1 className="page-title">Net Worth Tracker</h1>
         {result && (
-          <button className="btn-secondary export-btn" onClick={exportToPDF}>
+          <button className="btn-secondary export-btn" onClick={exportToPDF}  onClick={playClick}>
             📄 Export PDF
           </button>
         )}
@@ -126,14 +127,15 @@ function NetWorth() {
 
       <div className="section-label">Assets (what you own)</div>
       {renderRows(assets, setAssets, "e.g. Savings, Car, Property")}
-      <button className="btn-secondary" onClick={() => addRow(assets, setAssets)} style={{ marginBottom: "20px" }}>+ Add Asset</button>
+      <button className="btn-secondary" onClick={() => addRow(assets, setAssets)} style={{ marginBottom: "20px" }} onClick={playClick}>+ Add Asset</button>
 
       <div className="section-label">Liabilities (what you owe)</div>
       {renderRows(liabilities, setLiabilities, "e.g. Loan, Credit Card, Mortgage")}
-      <button className="btn-secondary" onClick={() => addRow(liabilities, setLiabilities)} style={{ marginBottom: "20px" }}>+ Add Liability</button>
+      <button className="btn-secondary" onClick={() => addRow(liabilities, setLiabilities)} 
+      style={{ marginBottom: "20px" }} onClick={playClick}>+ Add Liability</button>
 
       <br />
-      <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
+      <button className="btn-primary" onClick={handleSubmit} disabled={loading} onClick={playClick}>
         {loading ? "Calculating..." : "Calculate Net Worth"}
       </button>
 
