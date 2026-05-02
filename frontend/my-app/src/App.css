@@ -228,7 +228,7 @@ input[type="number"]:focus,
 select:focus {
   border-color: var(--border-accent);
   box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.08);
-  background: #0f1a26;
+  background: var(--bg-secondary);
 }
 
 input::placeholder {
@@ -428,7 +428,7 @@ input::placeholder {
 
 /* TIP CARD */
 .tip-card {
-  background: linear-gradient(135deg, #0d1f14, #0a1a1f);
+  background: var(--bg-card);
   border: 1px solid var(--border-accent);
   border-radius: 16px;
   padding: 32px;
@@ -607,6 +607,145 @@ input::placeholder {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
+/* CHAT */
+.chat-page { display: flex; flex-direction: column; height: calc(100vh - 200px); min-height: 500px; }
+
+.chat-suggestions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+
+.suggestion-chip {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.suggestion-chip:hover { border-color: var(--border-accent); color: var(--accent); background: var(--accent-dim); }
+
+.chat-window {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.chat-bubble { display: flex; gap: 12px; align-items: flex-start; max-width: 85%; }
+.chat-bubble.user { align-self: flex-end; flex-direction: row-reverse; }
+
+.chat-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--accent-dim); border: 1px solid var(--border-accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--accent); flex-shrink: 0;
+}
+
+.chat-text {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.chat-bubble.user .chat-text { background: var(--accent-dim); border-color: var(--border-accent); color: var(--text-primary); }
+
+.chat-typing { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+.chat-typing span { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; animation: typing-bounce 1.2s infinite; }
+.chat-typing span:nth-child(2) { animation-delay: 0.2s; }
+.chat-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+.chat-input-row { display: flex; gap: 10px; }
+.chat-input-row input { flex: 1; }
+.chat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+
+/* TOAST */
+.toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
+
+.toast {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 18px; border-radius: 12px;
+  font-size: 14px; font-weight: 500; max-width: 320px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  animation: toast-slide-in 0.3s ease;
+  background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary);
+}
+.toast-error { border-color: rgba(255,77,109,0.4); background: rgba(255,77,109,0.06); }
+.toast-success { border-color: var(--border-accent); background: var(--accent-dim); }
+.toast-icon { font-size: 15px; flex-shrink: 0; }
+.toast-error .toast-icon { color: var(--danger); }
+.toast-success .toast-icon { color: var(--accent); }
+
+@keyframes toast-slide-in {
+  from { transform: translateX(110%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* SKELETON */
+.skeleton-card { background: var(--bg-secondary); border-radius: 12px; padding: 16px 18px; border: 1px solid var(--border); }
+
+.skeleton-line {
+  background: linear-gradient(90deg, var(--border) 25%, var(--bg-card-hover) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+.skeleton-short { height: 10px; width: 50%; margin-bottom: 12px; }
+.skeleton-tall { height: 22px; width: 75%; }
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* HEALTH SCORE */
+.health-score-section { display: flex; justify-content: center; margin-bottom: 40px; }
+
+.health-score-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 24px 40px;
+  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.health-score-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; }
+.health-score-status { font-size: 14px; font-weight: 700; margin-top: 2px; }
+.health-score-hint { font-size: 11px; color: var(--text-muted); }
+
+/* COMPARISON MODE */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+.scenario-label {
+  font-size: 11px; font-weight: 700; color: var(--accent);
+  text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.scenario-label::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
+.scenario-b .scenario-label { color: var(--warning); }
+.scenario-b .scenario-label::before { background: var(--warning); }
+
+.compare-results { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+.compare-winner { outline: 1px solid var(--border-accent); box-shadow: 0 0 24px rgba(0,255,136,0.07); border-radius: 12px; padding: 12px; }
+
+/* EXPORT */
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.export-btn { font-size: 12px; padding: 7px 14px; display: flex; align-items: center; gap: 5px; }
+
+/* PAGE HEADER WITH COMPARE TOGGLE */
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.page-header .page-title { margin-bottom: 0; }
+
 @media (max-width: 700px) {
   .navbar { padding: 0 20px; }
   .main-content { padding: 24px 16px; }
@@ -614,4 +753,6 @@ input::placeholder {
   .expense-row { grid-template-columns: 1fr; }
   .home-hero h2 { font-size: 32px; }
   .page-card { padding: 24px 20px; }
+  .compare-grid { grid-template-columns: 1fr; }
+  .compare-results { grid-template-columns: 1fr; }
 }

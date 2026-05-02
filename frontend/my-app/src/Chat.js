@@ -1,92 +1,159 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from 'react';
 
-const SUGGESTIONS = [
-  "How much should I save each month?",
-  "What's the 50/30/20 budget rule?",
-  "How do I start investing with $500?",
-  "What's a good emergency fund size?",
-];
-
-function Chat() {
+export default function Chat() {
   const [messages, setMessages] = useState([
-    { role: "assistant", text: "Hi! I'm your AI financial assistant. Ask me anything about budgeting, investing, saving, or loans." }
+    { role: 'assistant', text: "Hi! I'm your AI financial assistant. Ask me anything about budgeting, investing, saving, or loans." }
   ]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const bottomRef = useRef(null);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+  const messagesEndRef = useRef(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
-
-  const sendMessage = async (text) => {
-    if (!text.trim() || loading) return;
-    setInput("");
-    setMessages((prev) => [...prev, { role: "user", text }]);
-    setLoading(true);
-    try {
-      const res = await fetch("http://localhost:5000/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
-      });
-      const data = await res.json();
-      setMessages((prev) => [...prev, { role: "assistant", text: data.reply || data.error || "Sorry, I couldn't respond." }]);
-    } catch {
-      setMessages((prev) => [...prev, { role: "assistant", text: "Sorry, I couldn't connect to the server." }]);
-    } finally {
-      setLoading(false);
-    }
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, streamingText]);
+
+  const suggestions = [
+    "How can I save more money?",
+    "Best way to start investing?",
+    "How to pay off debt faster?",
+    "What's an emergency fund?"
+  ];
+
+  const sendMessage = async (messageText) => {
+    const userMessage = messageText || input;
+    if (!userMessage.trim() || isLoading) return;
+
+    // Add user message to chat
+    const updatedMessages = [...messages, { role: 'user', text: userMessage }];
+    setMessages(updatedMessages);
+    setInput('');
+    setIsLoading(true);
+    setStreamingText('');
+
+    try {
+      const response = await fetch('http://localhost:5000/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          messages: updatedMessages.map(msg => ({
+            role: msg.role,
+            text: msg.text
+          }))
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            if (data.trim()) {
+              try {
+                // Handle both quoted strings and plain text
+                let text = data;
+                if (data.startsWith('"') && data.endsWith('"')) {
+                  text = JSON.parse(data);
+                }
+                fullResponse += text;
+                setStreamingText(fullResponse);
+              } catch (e) {
+                fullResponse += data;
+                setStreamingText(fullResponse);
+              }
+            }
+          }
+        }
+      }
+
+      // Add final assistant message
+      setMessages(prev => [...prev, { role: 'assistant', text: fullResponse }]);
+      setStreamingText('');
+    } catch (error) {
+      console.error('Chat error:', error);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        text: 'Sorry, I had trouble responding. Please make sure the backend server is running on port 5000.' 
+      }]);
+      setStreamingText('');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="page-card chat-page">
-      <h1 className="page-title">Financial Chat</h1>
+      <h2 className="page-title">Financial Chat</h2>
       <p className="page-subtitle">Ask anything about personal finance and get instant AI-powered answers.</p>
-
-      {messages.length === 1 && (
-        <div className="chat-suggestions">
-          {SUGGESTIONS.map((s, i) => (
-            <button key={i} className="suggestion-chip" onClick={() => sendMessage(s)}>{s}</button>
-          ))}
-        </div>
-      )}
+      
+      <div className="chat-suggestions">
+        {suggestions.map((s, i) => (
+          <button key={i} className="suggestion-chip" onClick={() => sendMessage(s)}>
+            {s}
+          </button>
+        ))}
+      </div>
 
       <div className="chat-window">
-        {messages.map((msg, i) => (
-          <div key={i} className={`chat-bubble ${msg.role}`}>
-            {msg.role === "assistant" && <div className="chat-avatar">✦</div>}
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`chat-bubble ${msg.role}`}>
+            <div className="chat-avatar">
+              {msg.role === 'user' ? '👤' : '🤖'}
+            </div>
             <div className="chat-text">{msg.text}</div>
           </div>
         ))}
-        {loading && (
+        
+        {isLoading && streamingText && (
           <div className="chat-bubble assistant">
-            <div className="chat-avatar">✦</div>
-            <div className="chat-text chat-typing"><span /><span /><span /></div>
+            <div className="chat-avatar">🤖</div>
+            <div className="chat-text">{streamingText}</div>
           </div>
         )}
-        <div ref={bottomRef} />
+        
+        {isLoading && !streamingText && (
+          <div className="chat-bubble assistant">
+            <div className="chat-avatar">🤖</div>
+            <div className="chat-typing">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="chat-input-row">
         <input
           type="text"
-          placeholder="Ask about budgeting, investing, saving..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={loading}
+          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+          placeholder="Ask about budgeting, investing, saving..."
+          disabled={isLoading}
+          className="input-field"
         />
-        <button className="btn-primary" onClick={() => sendMessage(input)} disabled={loading || !input.trim()}>
+        <button onClick={() => sendMessage()} disabled={isLoading || !input.trim()} className="btn-primary">
           Send
         </button>
       </div>
     </div>
   );
 }
-
-export default Chat;

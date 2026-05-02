@@ -9,7 +9,7 @@ function Tips() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/tips");
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/tips`);
       const data = await res.json();
       if (data.error) setError(data.error);
       else setTip(data.tip);

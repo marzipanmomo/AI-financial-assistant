@@ -1,4 +1,15 @@
 import React, { useState, useEffect } from "react";
+import { useCountUp } from './useCountUp';
+import Skeleton from './Skeleton';
+import { useToast } from './Toast';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+// Animated value component
+function AnimatedValue({ value, prefix = "$" }) {
+  const displayValue = useCountUp(value, 600);
+  return <span>{prefix}{displayValue.toFixed(2)}</span>;
+}
 
 function BillSplitter() {
   const [total, setTotal] = useState(() => localStorage.getItem("split_total") || "");
@@ -7,18 +18,27 @@ function BillSplitter() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { showToast } = useToast();
 
   useEffect(() => { localStorage.setItem("split_total", total); }, [total]);
   useEffect(() => { localStorage.setItem("split_people", people); }, [people]);
   useEffect(() => { localStorage.setItem("split_tip", tipPercent); }, [tipPercent]);
 
   const handleSubmit = async () => {
-    if (!total || parseFloat(total) <= 0) { setError("Please enter a valid bill total."); return; }
-    if (!people || parseInt(people) < 2) { setError("Please enter at least 2 people."); return; }
+    if (!total || parseFloat(total) <= 0) { 
+      setError("Please enter a valid bill total.");
+      showToast('error', 'Please enter a valid bill total');
+      return; 
+    }
+    if (!people || parseInt(people) < 2) { 
+      setError("Please enter at least 2 people.");
+      showToast('error', 'Please enter at least 2 people');
+      return; 
+    }
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/split", {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/split`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -28,12 +48,49 @@ function BillSplitter() {
         }),
       });
       const data = await res.json();
-      if (data.error) { setError(data.error); setResult(null); }
-      else setResult(data);
+      if (data.error) { 
+        setError(data.error); 
+        setResult(null);
+        showToast('error', data.error);
+      } else {
+        setResult(data);
+        showToast('success', 'Bill split calculated successfully!');
+      }
     } catch {
       setError("Could not connect to the server. Please try again.");
+      showToast('error', 'Could not connect to server');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const exportToPDF = async () => {
+    const element = document.getElementById('split-results');
+    if (!element) {
+      showToast('error', 'No results to export');
+      return;
+    }
+    
+    showToast('info', 'Generating PDF...');
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        backgroundColor: '#0a0f1a'
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      const imgWidth = 190;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save('bill-split.pdf');
+      showToast('success', 'PDF exported successfully!');
+    } catch (error) {
+      console.error('PDF error:', error);
+      showToast('error', 'Failed to generate PDF');
     }
   };
 
@@ -41,7 +98,14 @@ function BillSplitter() {
 
   return (
     <div className="page-card">
-      <h1 className="page-title">Bill Splitter</h1>
+      <div className="result-header">
+        <h1 className="page-title">Bill Splitter</h1>
+        {result && (
+          <button className="btn-secondary export-btn" onClick={exportToPDF}>
+            📄 Export PDF
+          </button>
+        )}
+      </div>
       <p className="page-subtitle">Split any bill fairly between friends, with tip included.</p>
 
       <div className="input-row">
@@ -86,38 +150,49 @@ function BillSplitter() {
         {loading ? "Splitting..." : "Split Bill"}
       </button>
 
-      {loading && <p className="loading">Calculating...</p>}
       {error && <p className="error-msg">{error}</p>}
 
-      {result && (
-        <div>
-          <div className="result-grid" style={{ marginTop: "24px" }}>
-            <div className="result-card">
-              <div className="label">Bill Total</div>
-              <div className="value">${result.original_total}</div>
+      <div id="split-results">
+        {loading ? (
+          <Skeleton count={4} />
+        ) : result && (
+          <div>
+            <div className="result-grid" style={{ marginTop: "24px" }}>
+              <div className="result-card">
+                <div className="label">Bill Total</div>
+                <div className="value">
+                  <AnimatedValue value={result.original_total} />
+                </div>
+              </div>
+              <div className="result-card">
+                <div className="label">Tip ({result.tip_percent}%)</div>
+                <div className="value">
+                  <AnimatedValue value={result.tip_amount} />
+                </div>
+              </div>
+              <div className="result-card">
+                <div className="label">Grand Total</div>
+                <div className="value">
+                  <AnimatedValue value={result.grand_total} />
+                </div>
+              </div>
+              <div className="result-card highlight">
+                <div className="label">Each Person Pays</div>
+                <div className="value" style={{ color: '#00ff88', fontSize: '28px' }}>
+                  <AnimatedValue value={result.per_person} />
+                </div>
+              </div>
             </div>
-            <div className="result-card">
-              <div className="label">Tip ({result.tip_percent}%)</div>
-              <div className="value">${result.tip_amount}</div>
-            </div>
-            <div className="result-card">
-              <div className="label">Grand Total</div>
-              <div className="value">${result.grand_total}</div>
-            </div>
-            <div className="result-card highlight">
-              <div className="label">Each Person Pays</div>
-              <div className="value">${result.per_person}</div>
-            </div>
-          </div>
 
-          <div className="ai-insight" style={{ marginTop: "20px" }}>
-            <div className="ai-label">✦ Summary</div>
-            <p>
-              Split between <strong>{result.people} people</strong> — each pays <strong>${result.per_person}</strong> including a {result.tip_percent}% tip.
-            </p>
+            <div className="ai-insight" style={{ marginTop: "20px" }}>
+              <div className="ai-label">✦ Summary</div>
+              <p>
+                Split between <strong>{result.people} people</strong> — each pays <strong>${result.per_person}</strong> including a {result.tip_percent}% tip.
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

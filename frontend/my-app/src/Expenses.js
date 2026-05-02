@@ -1,61 +1,130 @@
 import React, { useState, useEffect } from "react";
+import { useCountUp } from './useCountUp';
+import { useToast } from './Toast';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+// Animated value component
+function AnimatedValue({ value, prefix = "$", suffix = "" }) {
+  const displayValue = useCountUp(value, 600);
+  return <span>{prefix}{displayValue.toFixed(2)}{suffix}</span>;
+}
 
 function Expenses() {
-  const [items, setItems] = useState(() => localStorage.getItem("expenses_items") || "");
-  const [result, setResult] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [expenses, setExpenses] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("expenses")) || []; }
+    catch { return []; }
+  });
+  const [category, setCategory] = useState("");
+  const [amount, setAmount] = useState("");
+  const [total, setTotal] = useState(0);
+  const { showToast } = useToast();
 
-  useEffect(() => { localStorage.setItem("expenses_items", items); }, [items]);
+  useEffect(() => {
+    const sum = expenses.reduce((acc, exp) => acc + exp.amount, 0);
+    setTotal(sum);
+    localStorage.setItem("expenses", JSON.stringify(expenses));
+  }, [expenses]);
 
-  const handleSubmit = async () => {
-    if (!items.trim()) { setError("Please enter some purchases."); return; }
-    setError("");
-    setLoading(true);
+  const addExpense = () => {
+    if (!category || !amount || amount <= 0) {
+      showToast("error", "Please enter a valid category and amount");
+      return;
+    }
+    setExpenses([...expenses, { id: Date.now(), category, amount: parseFloat(amount) }]);
+    setCategory("");
+    setAmount("");
+    showToast("success", "Expense added successfully!");
+  };
+
+  const deleteExpense = (id) => {
+    setExpenses(expenses.filter(exp => exp.id !== id));
+    showToast("success", "Expense deleted");
+  };
+
+  const exportToPDF = async () => {
+    const element = document.getElementById('expenses-results');
+    if (!element) {
+      showToast('error', 'No results to export');
+      return;
+    }
+    
+    showToast('info', 'Generating PDF...');
     try {
-      const res = await fetch("http://localhost:5000/api/expenses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ purchases: items }),
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        backgroundColor: '#0a0f1a'
       });
-      const data = await res.json();
-      if (data.error) { setError(data.error); setResult(""); }
-      else setResult(data.ai_analysis);
-    } catch {
-      setError("Could not connect to the server. Please try again.");
-    } finally {
-      setLoading(false);
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      const imgWidth = 190;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save('expenses-report.pdf');
+      showToast('success', 'PDF exported successfully!');
+    } catch (error) {
+      console.error('PDF error:', error);
+      showToast('error', 'Failed to generate PDF');
     }
   };
 
   return (
     <div className="page-card">
-      <h1 className="page-title">Expense Analyzer</h1>
-      <p className="page-subtitle">Enter your purchases and get AI-powered spending insights.</p>
+      <div className="result-header">
+        <h2 className="page-title">Expense Tracker</h2>
+        {expenses.length > 0 && (
+          <button className="btn-secondary export-btn" onClick={exportToPDF}>
+            📄 Export PDF
+          </button>
+        )}
+      </div>
 
       <div className="input-group">
-        <label className="input-label">Your Purchases</label>
+        <label>Category</label>
         <input
           type="text"
-          placeholder="e.g. Netflix, Uber, Coffee, Groceries"
-          value={items}
-          onChange={(e) => setItems(e.target.value)}
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          placeholder="e.g., Groceries, Rent, Entertainment"
         />
       </div>
 
-      <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
-        {loading ? "Analyzing..." : "Analyze Expenses"}
-      </button>
+      <div className="input-group">
+        <label>Amount ($)</label>
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="0.00"
+        />
+      </div>
 
-      {loading && <p className="loading">AI is analyzing your spending patterns...</p>}
-      {error && <p className="error-msg">{error}</p>}
+      <button onClick={addExpense} className="btn-primary">Add Expense</button>
 
-      {result && (
-        <div className="ai-insight" style={{ marginTop: "24px" }}>
-          <div className="ai-label">✦ AI Analysis</div>
-          <p>{result}</p>
+      <div id="expenses-results">
+        <div className="result-card" style={{ marginTop: "24px" }}>
+          <div className="label">Total Expenses</div>
+          <div className="value" style={{ color: '#ff4d6d' }}>
+            <AnimatedValue value={total} />
+          </div>
         </div>
-      )}
+
+        {expenses.length > 0 && (
+          <ul className="breakdown-list" style={{ marginTop: "20px" }}>
+            {expenses.map(exp => (
+              <li key={exp.id}>
+                <span className="item-name">{exp.category}</span>
+                <span className="item-amount">${exp.amount.toFixed(2)}</span>
+                <button className="btn-danger" style={{ padding: "4px 12px", fontSize: "12px" }} onClick={() => deleteExpense(exp.id)}>Delete</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

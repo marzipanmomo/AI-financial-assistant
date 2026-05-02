@@ -1,6 +1,7 @@
-from flask import Blueprint, request, jsonify
-from ai_helper import get_ai_response
+from flask import Blueprint, request, jsonify, Response, stream_with_context
+from ai_helper import get_ai_response, get_ai_response_stream
 import requests as http_requests
+import json
 
 routes = Blueprint('routes', __name__)
 
@@ -285,24 +286,32 @@ def investment():
         'ai_insight': ai_insight
     })
 
-# ── 10. AI Chat ──────────────────────────────────────────────────────────────
+# ── 10. AI Chat (streaming with memory) ─────────────────────────────────────
 @routes.route('/api/chat', methods=['POST'])
 def chat():
     data = request.json
-    message = data.get('message', '').strip()
+    messages = data.get('messages', [])
 
-    if not message:
-        return jsonify({'error': 'Message cannot be empty'}), 400
+    if not messages:
+        return jsonify({'error': 'Messages cannot be empty'}), 400
 
-    prompt = f"""
-    You are a helpful financial assistant. Answer the following question in a friendly, 
-    clear, and practical way (3-5 sentences max). Focus only on financial advice.
-    
-    User question: {message}
-    """
-    reply = get_ai_response(prompt)
+    groq_messages = [
+        {"role": "system", "content": "You are a helpful, friendly financial assistant. Answer questions about budgeting, investing, saving, and loans clearly and practically in 3-5 sentences max."}
+    ]
+    for msg in messages:
+        if msg.get('role') in ('user', 'assistant') and msg.get('text'):
+            groq_messages.append({"role": msg['role'], "content": msg['text']})
 
-    return jsonify({'reply': reply})
+    def generate():
+        for chunk in get_ai_response_stream(groq_messages):
+            yield f"data: {json.dumps(chunk)}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'}
+    )
 
 # ── Health check ─────────────────────────────────────────────────────────────
 @routes.route('/api/ping', methods=['GET'])
