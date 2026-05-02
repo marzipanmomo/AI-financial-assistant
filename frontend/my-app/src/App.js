@@ -13,13 +13,24 @@ import Currency from "./Currency";
 import "./App.css";
 import PageTransition from "./PageTransition";
 import { AnimatePresence } from "framer-motion";
+import clickSound from "./button.wav";
+
+//reusable audio object
+const clickAudio = new Audio(clickSound);
+const playClick = () => {
+  clickAudio.currentTime = 0;
+  clickAudio.play();
+};
+
 
 function NavLink({ to, children }) {
   const location = useLocation();
   const isActive = location.pathname === to;
   return (
     <li>
-      <Link to={to} className={isActive ? "active" : ""}>{children}</Link>
+      <Link to={to} className={isActive ? "active" : ""} onClick={playClick}>
+      {children}
+      </Link>
     </li>
   );
 }
@@ -35,11 +46,14 @@ function ThemeToggle() {
   }, [theme]);
 
   return (
-    <button
+  <button
     className="btn-secondary theme-toggle"
-    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+    onClick={() => {
+      setTheme(theme === "dark" ? "light" : "dark");
+      playClick();
+    }}>
     {theme === "dark" ? "🌞 Light" : "🌙 Dark"}
-    </button>
+  </button> 
   );
 }
 
@@ -49,52 +63,52 @@ function Home() {
       <h2>AI Financial Assistant</h2>
       <p>Smart tools to manage your money, powered by AI.</p>
       <div className="home-cards">
-        <Link to="/budget" className="home-card">
+        <Link to="/budget" className="home-card" onClick={playClick}>
           <div className="card-icon">💰</div>
           <div className="card-title">Budget</div>
           <div className="card-desc">Track income & expenses</div>
         </Link>
-        <Link to="/expenses" className="home-card">
+        <Link to="/expenses" className="home-card" onClick={playClick}>
           <div className="card-icon">📊</div>
           <div className="card-title">Expenses</div>
           <div className="card-desc">Analyze your spending</div>
         </Link>
-        <Link to="/savings" className="home-card">
+        <Link to="/savings" className="home-card" onClick={playClick}>
           <div className="card-icon">🎯</div>
           <div className="card-title">Savings</div>
           <div className="card-desc">Plan your goals</div>
         </Link>
-        <Link to="/tips" className="home-card">
+        <Link to="/tips" className="home-card" onClick={playClick}>
           <div className="card-icon">💡</div>
           <div className="card-title">Tips</div>
           <div className="card-desc">Daily financial wisdom</div>
         </Link>
-        <Link to="/loan" className="home-card">
+        <Link to="/loan" className="home-card" onClick={playClick}>
           <div className="card-icon">🏦</div>
           <div className="card-title">Loan & EMI</div>
           <div className="card-desc">Calculate loan payments</div>
         </Link>
-        <Link to="/networth" className="home-card">
+        <Link to="/networth" className="home-card" onClick={playClick}>
           <div className="card-icon">📈</div>
           <div className="card-title">Net Worth</div>
           <div className="card-desc">Track your wealth</div>
         </Link>
-        <Link to="/split" className="home-card">
+        <Link to="/split" className="home-card" onClick={playClick}>
           <div className="card-icon">🍽️</div>
           <div className="card-title">Bill Splitter</div>
           <div className="card-desc">Split bills with friends</div>
         </Link>
-        <Link to="/investment" className="home-card">
+        <Link to="/investment" className="home-card" onClick={playClick}>
           <div className="card-icon">🚀</div>
           <div className="card-title">Investment</div>
           <div className="card-desc">Calculate ROI & returns</div>
         </Link>
-        <Link to="/chat" className="home-card">
+        <Link to="/chat" className="home-card" onClick={playClick}>
           <div className="card-icon">✦</div>
           <div className="card-title">AI Chat</div>
           <div className="card-desc">Ask anything about finance</div>
         </Link>
-        <Link to="/currency" className="home-card">
+        <Link to="/currency" className="home-card" onClick={playClick}>
           <div className="card-icon">💱</div>
           <div className="card-title">Currency</div>
           <div className="card-desc">Convert world currencies</div>

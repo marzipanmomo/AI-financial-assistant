@@ -9,5 +9,9 @@ app = Flask(__name__)
 CORS(app)
 app.register_blueprint(routes)
 
+@app.route("/ping")
+def ping():
+    return {"status": "ok", "message": "Backend is running!"}
+
 if __name__ == '__main__':
     app.run(debug=True)
