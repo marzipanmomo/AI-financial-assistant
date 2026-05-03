@@ -104,12 +104,9 @@ function Savings({ user }) {
     <div className="page-card">
       <div className="result-header">
         <h1 className="page-title">Savings Goal Planner</h1>
-        {result && (
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
-            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
-          </div>
-        )}
+          {result && (
+              <button className="btn-primary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+          )}
       </div>
       <p className="page-subtitle">Set your savings target and get a personalized plan to reach it.</p>
 
@@ -128,9 +125,14 @@ function Savings({ user }) {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
-        {loading ? "Planning..." : "Create My Plan"}
-      </button>
+      <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
+        <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
+          {loading ? "Planning..." : "Create My Plan"}
+        </button>
+        <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>
+          ✕ Clear
+        </button>
+      </div>
 
       {error && <p className="error-msg">{error}</p>}
 

@@ -115,12 +115,9 @@ function Investment({ user }) {
     <div className="page-card">
       <div className="result-header">
         <h1 className="page-title">Investment Returns</h1>
-        {result && (
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
-            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
-          </div>
-        )}
+          {result && (
+            <button className="btn-primary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+          )}
       </div>
       <p className="page-subtitle">See how your investments grow over time with compound returns.</p>
 
@@ -143,10 +140,14 @@ function Investment({ user }) {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
-        {loading ? "Calculating..." : "Calculate Returns"}
-      </button>
-
+      <div style={{ display: "flex", gap: "8px" }}>
+        <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
+          {loading ? "Calculating..." : "Calculate Returns"}
+        </button>
+        <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>
+          ✕ Clear
+        </button>
+      </div>
       {error && <p className="error-msg">{error}</p>}
 
       <div id="investment-results">

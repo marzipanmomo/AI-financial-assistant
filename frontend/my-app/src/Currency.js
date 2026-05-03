@@ -46,9 +46,6 @@ function Currency() {
     <div className="page-card">
       <div className="result-header">
         <h1 className="page-title">Currency Converter</h1>
-        {result && (
-          <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
-        )}
       </div>
       <p className="page-subtitle">Convert between world currencies using live exchange rates.</p>
 
@@ -78,9 +75,14 @@ function Currency() {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
-        {loading ? "Converting..." : "Convert"}
-      </button>
+      <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
+        <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
+          {loading ? "Converting..." : "Convert"}
+        </button>
+        <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>
+          ✕ Clear
+        </button>
+      </div>
 
       {loading && <p className="loading">Fetching live rates...</p>}
       {error && <p className="error-msg">{error}</p>}

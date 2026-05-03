@@ -113,6 +113,21 @@ function History({ user }) {
       <h1 className="page-title">Activity History</h1>
       <p className="page-subtitle">Your last 20 calculations across all tools.</p>
 
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
+      <button
+        onClick={() => setHistory([])}
+        style={{
+          padding: "8px 12px",
+          background: "var(--accent)",
+          border: "1px solid var(--border)",
+          borderRadius: "6px",
+          cursor: "pointer"
+        }}
+      >
+        Clear History
+      </button>
+      </div>
+
       {loading && <p className="loading">Loading history...</p>}
       {error && <p className="error-msg">{error}</p>}
 
@@ -122,87 +137,110 @@ function History({ user }) {
         </div>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "16px" }}>
-        {history.map((item, i) => {
-          const meta = MODULE_META[item.module] || { emoji: "📁", label: item.module };
-          const stat = getKeyStat(item.module, item.result, symbol);
-          const isOpen = expanded === i;
-          const fields = getFields(item.module, item.result, symbol).filter(Boolean);
+ <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "16px" }}>
+  {history.map((item, i) => {
+    const meta = MODULE_META[item.module] || { emoji: "📁", label: item.module };
+    const stat = getKeyStat(item.module, item.result, symbol);
+    const isOpen = expanded === i;
+    const fields = getFields(item.module, item.result, symbol).filter(Boolean);
 
-          return (
-            <div
-              key={i}
-              className="result-card"
-              style={{ cursor: "pointer" }}
-              onClick={() => { playClick(); setExpanded(isOpen ? null : i); }}
-            >
-              {/* Header row */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span style={{ fontSize: "20px" }}>{meta.emoji}</span>
-                  <div>
-                    <div style={{ fontWeight: "600", color: "var(--text-primary)", fontSize: "14px" }}>
-                      {meta.label}
-                    </div>
-                    {stat && (
-                      <div style={{ fontSize: "12px", color: "#00ff88", marginTop: "2px" }}>{stat}</div>
-                    )}
-                  </div>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{formatDate(item.date)}</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
-                    {isOpen ? "▲ hide" : "▼ details"}
-                  </div>
-                </div>
+    return (
+      <div
+        key={i}
+        className="result-card"
+        style={{ cursor: "pointer", position: "relative" }}
+        onClick={() => { playClick(); setExpanded(isOpen ? null : i); }}
+      >
+        {/* Cross button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setHistory(history.filter((_, idx) => idx !== i));
+          }}
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+            background: "transparent",
+            border: "none",
+            color: "var(--text-muted)",
+            fontSize: "16px",
+            cursor: "pointer",
+            transition: "color 0.2s",
+          }}
+          onMouseEnter={(e) => e.target.style.color = "#ff4d6d"}
+          onMouseLeave={(e) => e.target.style.color = "var(--text-muted)"}
+        >
+          ×
+        </button>
+
+        {/* Header row */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "20px" }}>{meta.emoji}</span>
+            <div>
+              <div style={{ fontWeight: "600", color: "var(--text-primary)", fontSize: "14px" }}>
+                {meta.label}
               </div>
-
-              {/* Expanded detail */}
-              {isOpen && (
-                <div
-                  style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid var(--border)" }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "10px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.8px" }}>
-                    Result Breakdown
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    {fields.map((f, fi) =>
-                      f.wide ? (
-                        <div
-                          key={fi}
-                          style={{ padding: "10px 12px", background: "var(--accent-dim)", borderRadius: "8px", border: "1px solid var(--border-accent)", marginTop: "4px" }}
-                        >
-                          <div style={{ fontSize: "10px", fontWeight: "700", color: "#00ff88", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>
-                            {f.label}
-                          </div>
-                          <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)", lineHeight: "1.6" }}>
-                            {f.value}
-                          </p>
-                        </div>
-                      ) : (
-                        <div
-                          key={fi}
-                          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--border)" }}
-                        >
-                          <span style={{ fontSize: "13px", color: "var(--text-muted)", textTransform: "capitalize" }}>
-                            {f.label}
-                          </span>
-                          <span style={{ fontSize: "13px", fontWeight: "600", color: "var(--text-primary)" }}>
-                            {f.value}
-                          </span>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
+              {stat && (
+                <div style={{ fontSize: "12px", color: "#00ff88", marginTop: "2px" }}>{stat}</div>
               )}
             </div>
-          );
-        })}
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{formatDate(item.date)}</div>
+            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+              {isOpen ? "▲ hide" : "▼ details"}
+            </div>
+          </div>
+        </div>
+
+        {/* Expanded details */}
+        {isOpen && (
+          <div
+            style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "10px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.8px" }}>
+              Result Breakdown
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              {fields.map((f, fi) =>
+                f.wide ? (
+                  <div
+                    key={fi}
+                    style={{ padding: "10px 12px", background: "var(--accent-dim)", borderRadius: "8px", border: "1px solid var(--border-accent)", marginTop: "4px" }}
+                  >
+                    <div style={{ fontSize: "10px", fontWeight: "700", color: "#00ff88", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>
+                      {f.label}
+                    </div>
+                    <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)", lineHeight: "1.6" }}>
+                      {f.value}
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    key={fi}
+                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--border)" }}
+                  >
+                    <span style={{ fontSize: "13px", color: "var(--text-muted)", textTransform: "capitalize" }}>
+                      {f.label}
+                    </span>
+                    <span style={{ fontSize: "13px", fontWeight: "600", color: "var(--text-primary)" }}>
+                      {f.value}
+                    </span>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    );
+  })}
+  </div>     
+  </div>
   );
 }
 

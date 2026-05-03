@@ -60,9 +60,6 @@ function TaxEstimator({ user }) {
     <div className="page-card">
       <div className="result-header">
         <h1 className="page-title">Tax Estimator</h1>
-        {result && (
-          <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
-        )}
       </div>
       <p className="page-subtitle">
         Estimate your Pakistan income tax for FY 2025–26 (Tax Year 2026) under FBR slabs.
@@ -99,14 +96,19 @@ function TaxEstimator({ user }) {
         </div>
       </div>
 
-      <button
-        className="btn-primary"
-        onClick={() => { playClick(); handleSubmit(); }}
-        disabled={loading}
-      >
-        {loading ? "Calculating..." : "Estimate Tax"}
-      </button>
-
+      <div style={{ display: "flex", gap: "8px" }}>
+        <button
+          className="btn-primary"
+          onClick={() => { playClick(); handleSubmit(); }}
+          disabled={loading}
+        >
+          {loading ? "Calculating..." : "Estimate Tax"}
+        </button>
+        <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>
+          ✕ Clear
+        </button>
+      </div>
+      
       {error && <p className="error-msg">{error}</p>}
 
       {loading ? (

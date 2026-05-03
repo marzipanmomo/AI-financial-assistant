@@ -100,12 +100,11 @@ function BillSplitter() {
     <div className="page-card">
       <div className="result-header">
         <h1 className="page-title">Bill Splitter</h1>
-        {result && (
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          {result && (
             <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       <p className="page-subtitle">Split any bill fairly between friends, with tip included.</p>
 
@@ -147,10 +146,14 @@ function BillSplitter() {
         ))}
       </div>
 
-      <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
-        {loading ? "Splitting..." : "Split Bill"}
-      </button>
-
+      <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
+        <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
+          {loading ? "Splitting..." : "Split Bill"}
+        </button>
+        <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>
+          ✕ Clear
+        </button>
+      </div>
       {error && <p className="error-msg">{error}</p>}
 
       <div id="split-results">

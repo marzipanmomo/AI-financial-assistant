@@ -104,12 +104,9 @@ function Loan({ user }) {
     <div className="page-card">
       <div className="result-header">
         <h1 className="page-title">Loan & EMI Calculator</h1>
-        {result && (
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
-            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
-          </div>
-        )}
+          {result && (
+            <button className="btn-primary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+          )}
       </div>
       <p className="page-subtitle">Find out your monthly payment and total interest on any loan.</p>
 
@@ -128,9 +125,14 @@ function Loan({ user }) {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
-        {loading ? "Calculating..." : "Calculate EMI"}
-      </button>
+      <div style={{ display: "flex", gap: "8px" }}>
+        <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
+          {loading ? "Calculating..." : "Calculate EMI"}
+        </button>
+        <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>
+          ✕ Clear
+        </button>
+      </div>
 
       {error && <p className="error-msg">{error}</p>}
 

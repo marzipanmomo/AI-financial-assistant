@@ -54,11 +54,6 @@ const SentimentAnalyzer = () => {
         <div>
           <h1 className="page-title">Sentiment Analyzer</h1>
         </div>
-        {result && (
-          <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>
-            ✕ Clear
-          </button>
-        )}
       </div>
       <p className="page-subtitle">
         Analyze the sentiment of any financial statement or news headline using a trained ML model.
@@ -90,14 +85,19 @@ const SentimentAnalyzer = () => {
         </p>
       </div>
 
-      <button
-        className="btn-primary"
-        style={{ marginTop: "4px" }}
-        onClick={() => { playClick(); analyzeSentiment(); }}
-        disabled={loading || !text.trim()}
-      >
-        {loading ? "Analyzing..." : "✦ Analyze Sentiment"}
-      </button>
+      <div style={{ display: "flex", gap: "8px" }}>
+        <button
+          className="btn-primary"
+          style={{ marginTop: "4px" }}
+          onClick={() => { playClick(); analyzeSentiment(); }}
+          disabled={loading || !text.trim()}
+        >
+          {loading ? "Analyzing..." : "✦ Analyze Sentiment"}
+        </button>
+        <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>
+          ✕ Clear
+        </button>
+      </div>
 
       {error && <p className="error-msg" style={{ marginTop: "12px" }}>{error}</p>}
 

@@ -120,12 +120,9 @@ function Budget({ user }) {
     <div className="page-card">
       <div className="result-header">
         <h1 className="page-title">Budget Calculator</h1>
-        {result && (
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
+          {result && (
             <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
-          </div>
-        )}
+          )}
       </div>
       <p className="page-subtitle">Enter your income and expenses to get an AI-powered breakdown.</p>
 
@@ -148,6 +145,9 @@ function Budget({ user }) {
         <button className="btn-secondary" onClick={() => { playClick(); addExpense(); }}>+ Add Expense</button>
         <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
           {loading ? "Calculating..." : "Calculate"}
+        </button>
+        <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>
+          ✕ Clear
         </button>
       </div>
 

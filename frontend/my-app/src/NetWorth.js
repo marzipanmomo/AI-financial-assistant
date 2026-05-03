@@ -116,12 +116,9 @@ function NetWorth({ user }) {
     <div className="page-card">
       <div className="result-header">
         <h1 className="page-title">Net Worth Tracker</h1>
-        {result && (
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
-            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
-          </div>
-        )}
+          {result && (
+            <button className="btn-primary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+          )}
       </div>
       <p className="page-subtitle">Add your assets and liabilities to calculate your true financial picture.</p>
 
@@ -134,9 +131,14 @@ function NetWorth({ user }) {
       <button className="btn-secondary" onClick={() => { playClick(); addRow(liabilities, setLiabilities); }} style={{ marginBottom: "20px" }}>+ Add Liability</button>
 
       <br />
-      <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
-        {loading ? "Calculating..." : "Calculate Net Worth"}
-      </button>
+      <div style={{ display: "flex", gap: "8px" }}>
+        <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
+          {loading ? "Calculating..." : "Calculate Net Worth"}
+        </button>
+        <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>
+          ✕ Clear
+        </button>
+      </div>
 
       {error && <p className="error-msg">{error}</p>}
 
