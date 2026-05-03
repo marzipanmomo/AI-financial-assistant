@@ -313,6 +313,128 @@ def chat():
         headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'}
     )
 
+# ── 11. Tax Estimator (Pakistan FBR — Tax Year 2026 / FY 2025-26) ───────────
+@routes.route('/api/tax', methods=['POST'])
+def tax():
+    data = request.json
+    income = float(data.get('income', 0))
+    taxpayer_type = data.get('taxpayer_type', 'salaried')  # 'salaried' | 'business'
+    extra_deductions = float(data.get('extra_deductions', 0))
+
+    if income <= 0:
+        return jsonify({'error': 'Income must be positive'}), 400
+
+    # ── Deductions ────────────────────────────────────────────────────────────
+    # Zakat (2.5% on savings/assets) is deductible if paid; we treat extra_deductions
+    # as a combined figure (Zakat + provident fund contributions etc.)
+    zakat_deduction = 0.0
+    total_deductions = extra_deductions
+    taxable_income = max(income - total_deductions, 0)
+
+    # ── FBR Slabs — Tax Year 2026 (Finance Act 2025) ─────────────────────────
+    # Salaried individuals (Division I, Part I, First Schedule)
+    salaried_brackets = [
+        (600_000,    0.00),   # 0 – 600,000          → 0%
+        (1_200_000,  0.05),   # 600,001 – 1,200,000  → 5%
+        (2_200_000,  0.15),   # 1,200,001 – 2,200,000→ 15%
+        (3_200_000,  0.25),   # 2,200,001 – 3,200,000→ 25%
+        (4_100_000,  0.30),   # 3,200,001 – 4,100,000→ 30%
+        (float('inf'), 0.35), # Above 4,100,000      → 35%
+    ]
+
+    # Business individuals / AOP (Division II, Part I, First Schedule)
+    business_brackets = [
+        (600_000,    0.00),   # 0 – 600,000          → 0%
+        (1_200_000,  0.15),   # 600,001 – 1,200,000  → 15%
+        (1_600_000,  0.20),   # 1,200,001 – 1,600,000→ 20%
+        (3_200_000,  0.25),   # 1,600,001 – 3,200,000→ 25%
+        (5_600_000,  0.30),   # 3,200,001 – 5,600,000→ 30%
+        (float('inf'), 0.35), # Above 5,600,000      → 35%
+    ]
+
+    brackets = salaried_brackets if taxpayer_type == 'salaried' else business_brackets
+
+    # ── Bracket calculation ───────────────────────────────────────────────────
+    total_income_tax = 0.0
+    prev_limit = 0
+    marginal_rate = 0.0
+    bracket_details = []
+    remaining = taxable_income
+
+    for limit, rate in brackets:
+        if remaining <= 0:
+            break
+        band = limit - prev_limit
+        taxable_in_band = min(remaining, band)
+        band_tax = round(taxable_in_band * rate, 2)
+        if band_tax > 0:
+            bracket_details.append({'rate': int(rate * 100), 'tax': band_tax})
+        total_income_tax += band_tax
+        marginal_rate = rate
+        prev_limit = limit
+        remaining -= taxable_in_band
+
+    total_income_tax = round(total_income_tax, 2)
+
+    # ── Super Tax (Section 4C — applies to individuals above PKR 150M income) ─
+    # Rates for Tax Year 2026 (individuals/AOP, not companies):
+    # 10M–150M: 1%, 150M–200M: 2%, 200M–250M: 3%, 250M–300M: 4%, >300M: 10%
+    super_tax_brackets = [
+        (10_000_000,  0.00),
+        (150_000_000, 0.01),
+        (200_000_000, 0.02),
+        (250_000_000, 0.03),
+        (300_000_000, 0.04),
+        (float('inf'), 0.10),
+    ]
+
+    surcharge = 0.0
+    st_prev = 0
+    st_remaining = income  # super tax is on gross income, not taxable income
+
+    for st_limit, st_rate in super_tax_brackets:
+        if st_remaining <= 0:
+            break
+        band = st_limit - st_prev
+        in_band = min(st_remaining, band)
+        surcharge += round(in_band * st_rate, 2)
+        st_prev = st_limit
+        st_remaining -= in_band
+
+    surcharge = round(surcharge, 2)
+    total_tax = round(total_income_tax + surcharge, 2)
+
+    effective_rate = round((total_tax / income) * 100, 2) if income > 0 else 0
+    monthly_take_home = round((income - total_tax) / 12, 2)
+
+    # ── AI tip (PKR context) ──────────────────────────────────────────────────
+    prompt = f"""
+    A Pakistani salaried/business taxpayer earns PKR {income:,.0f} per year (Tax Year 2026).
+    Taxpayer type: {taxpayer_type}. Taxable income: PKR {taxable_income:,.0f}.
+    Income tax: PKR {total_income_tax:,.0f}. Super tax: PKR {surcharge:,.0f}. Effective rate: {effective_rate}%.
+    Give a SHORT (2-3 sentences) practical tip on how they could legally reduce their FBR tax burden
+    (e.g. Zakat deduction, provident fund, tax credits for charitable donations under Section 61,
+    investment in REITS, filing on time to remain an active filer). Keep it Pakistan-specific.
+    """
+    ai_tip = get_ai_response(prompt)
+
+    return jsonify({
+        'income': income,
+        'taxpayer_type': taxpayer_type,
+        'extra_deductions': round(extra_deductions, 2),
+        'zakat_deduction': round(zakat_deduction, 2),
+        'total_deductions': round(total_deductions, 2),
+        'taxable_income': round(taxable_income, 2),
+        'estimated_tax': total_income_tax,
+        'surcharge': surcharge,
+        'total_tax': total_tax,
+        'effective_rate': effective_rate,
+        'marginal_rate': int(marginal_rate * 100),
+        'monthly_take_home': monthly_take_home,
+        'brackets': bracket_details,
+        'ai_tip': ai_tip,
+    })
+
 # ── Health check ─────────────────────────────────────────────────────────────
 @routes.route('/api/ping', methods=['GET'])
 def ping():
