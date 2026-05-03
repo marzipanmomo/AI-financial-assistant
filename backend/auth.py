@@ -83,7 +83,7 @@ def get_history(user_id):
     import json
     conn = db.get_db()
     rows = conn.execute(
-        'SELECT module, input_data, result_data, created_at FROM history WHERE user_id = ? ORDER BY created_at DESC LIMIT 20',
+        'SELECT id, module, input_data, result_data, created_at FROM history WHERE user_id = ? ORDER BY created_at DESC LIMIT 20',
         (user_id,)
     ).fetchall()
     conn.close()
@@ -91,9 +91,26 @@ def get_history(user_id):
     history = []
     for row in rows:
         history.append({
+            'id': row['id'],
             'module': row['module'],
             'input': json.loads(row['input_data']),
             'result': json.loads(row['result_data']),
             'date': row['created_at']
         })
     return jsonify({'history': history})
+
+@auth.route('/api/history/<int:user_id>', methods=['DELETE'])
+def clear_history(user_id):
+    conn = db.get_db()
+    conn.execute('DELETE FROM history WHERE user_id = ?', (user_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'History cleared!'})
+
+@auth.route('/api/history/<int:user_id>/<int:entry_id>', methods=['DELETE'])
+def delete_history_entry(user_id, entry_id):
+    conn = db.get_db()
+    conn.execute('DELETE FROM history WHERE id = ? AND user_id = ?', (entry_id, user_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Entry deleted!'})
