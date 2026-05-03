@@ -115,7 +115,11 @@ function History({ user }) {
 
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
       <button
-        onClick={() => setHistory([])}
+        onClick={() => {
+          fetch(`${process.env.REACT_APP_API_URL}/api/history/${user.id}`, { method: "DELETE" })
+            .then(() => setHistory([]))
+            .catch(() => {});
+        }}
         style={{
           padding: "8px 12px",
           background: "var(--accent)",
@@ -155,7 +159,9 @@ function History({ user }) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            setHistory(history.filter((_, idx) => idx !== i));
+            fetch(`${process.env.REACT_APP_API_URL}/api/history/${user.id}/${item.id}`, { method: "DELETE" })
+              .then(() => setHistory(history.filter((_, idx) => idx !== i)))
+              .catch(() => {});
           }}
           style={{
             position: "absolute",
