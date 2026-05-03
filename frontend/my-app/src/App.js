@@ -11,10 +11,15 @@ import Investment from "./Investment";
 import Login from "./Login";
 import Chat from "./Chat";
 import Currency from "./Currency";
+import SentimentAnalyzer from "./SentimentAnalyzer";
+import TaxEstimator from "./TaxEstimator";
+import Dashboard from "./Dashboard";
+import History from "./History";
 import "./App.css";
 import PageTransition from "./PageTransition";
 import { AnimatePresence } from "framer-motion";
 import { playClick } from "./sound.js";
+import { CurrencyProvider, useCurrency, CURRENCY_LIST } from "./CurrencyContext";
 
 function NavLink({ to, children }) {
   const location = useLocation();
@@ -25,6 +30,37 @@ function NavLink({ to, children }) {
       {children}
       </Link>
     </li>
+  );
+}
+
+function CurrencySelector() {
+  const { currency, setCurrency } = useCurrency();
+  return (
+    <select
+      className="currency-select"
+      value={currency}
+      onChange={(e) => setCurrency(e.target.value)}
+      style={{
+        background: "var(--card-bg)",
+        color: "var(--text-primary)",
+        border: "1px solid var(--border-accent)",
+        borderRadius: "8px",
+        padding: "5px 28px 5px 10px",
+        fontSize: "12px",
+        fontWeight: "600",
+        cursor: "pointer",
+        outline: "none",
+        fontFamily: "'DM Sans', sans-serif",
+        width: "80px",
+        flexShrink: 0,
+        appearance: "auto",
+        WebkitAppearance: "auto",
+      }}
+    >
+      {CURRENCY_LIST.map((c) => (
+        <option key={c} value={c}>{c}</option>
+      ))}
+    </select>
   );
 }
 
@@ -108,6 +144,26 @@ function Home() {
           <div className="card-title">Currency</div>
           <div className="card-desc">Convert world currencies</div>
         </Link>
+        <Link to="/sentiment" className="home-card" onClick={playClick}>
+          <div className="card-icon">📡</div>
+          <div className="card-title">Sentiment</div>
+          <div className="card-desc">Analyze financial sentiment</div>
+        </Link>
+        <Link to="/tax" className="home-card" onClick={playClick}>
+          <div className="card-icon">🧾</div>
+          <div className="card-title">Tax Estimator</div>
+          <div className="card-desc">Estimate your federal tax</div>
+        </Link>
+        <Link to="/history" className="home-card" onClick={playClick}>
+          <div className="card-icon">🕓</div>
+          <div className="card-title">History</div>
+          <div className="card-desc">View past calculations</div>
+        </Link>
+        <Link to="/dashboard" className="home-card" onClick={playClick}>
+          <div className="card-icon">🗂️</div>
+          <div className="card-title">Dashboard</div>
+          <div className="card-desc">Your financial overview</div>
+        </Link>
       </div>
     </div>
   );
@@ -134,9 +190,16 @@ function AppContent({ user, onLogout }) {
           <NavLink to="/investment">Investment</NavLink>
           <NavLink to="/chat">AI Chat</NavLink>
           <NavLink to="/currency">Currency</NavLink>
+          <NavLink to="/sentiment">Sentiment</NavLink>
+          <NavLink to="/tax">Tax</NavLink>
+          <NavLink to="/history">History</NavLink>
+          <NavLink to="/dashboard">Dashboard</NavLink>
         </ul>
 
-        <ThemeToggle className="theme-toggle"/>
+      <div style={{ marginLeft: "-4px", display: "flex", alignItems: "center", gap: "12px", marginRight: "10px" }}>
+  <ThemeToggle className="theme-toggle"/>
+  <CurrencySelector />
+</div>
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "12px" }}>
         <span style={{ color: "#8892a4", fontSize: "13px", alignItems: "center", marginRight: "-6px"}}>👤 {user.username}</span>
         <button className="btn-danger" onClick={onLogout}>Logout</button>
@@ -156,6 +219,10 @@ function AppContent({ user, onLogout }) {
             <Route path="/investment" element={<PageTransition><Investment user={user} /></PageTransition>} />
             <Route path="/chat" element={<PageTransition><Chat user={user} /></PageTransition>} />
             <Route path="/currency" element={<PageTransition><Currency user={user} /></PageTransition>} />
+            <Route path="/sentiment" element={<PageTransition><SentimentAnalyzer /></PageTransition>} />
+            <Route path="/tax" element={<PageTransition><TaxEstimator user={user} /></PageTransition>} />
+            <Route path="/history" element={<PageTransition><History user={user} /></PageTransition>} />
+            <Route path="/dashboard" element={<PageTransition><Dashboard user={user} /></PageTransition>} />
           </Routes>
         </AnimatePresence>
       </div>
@@ -180,11 +247,14 @@ function App() {
     setUser(null);
   };
 
-  if (!user) {
-    return <Login onLogin={handleLogin} />;
-  }
-
-  return <AppContent user={user} onLogout={handleLogout} />;
+  return (
+    <CurrencyProvider>
+      {!user
+        ? <Login onLogin={handleLogin} />
+        : <AppContent user={user} onLogout={handleLogout} />
+      }
+    </CurrencyProvider>
+  );
 }
 
 export default App;

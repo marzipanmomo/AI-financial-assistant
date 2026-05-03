@@ -23,10 +23,15 @@ function Tips() {
 
   return (
     <div className="page-card">
-      <h1 className="page-title">Financial Tips</h1>
+      <div className="result-header">
+        <h1 className="page-title">Financial Tips</h1>
+        {tip && (
+          <button className="btn-secondary" onClick={() => { playClick(); setTip(""); setError(""); }}>✕ Clear</button>
+        )}
+      </div>
       <p className="page-subtitle">Get a fresh AI-generated financial tip to guide your day.</p>
 
-      <button className="btn-primary" onClick={handleClick} disabled={loading} onClick={playClick}>
+      <button className="btn-primary" onClick={() => { playClick(); handleClick(); }} disabled={loading}>
         {loading ? "Generating..." : "✦ Get Tip of the Day"}
       </button>
 

@@ -6,9 +6,11 @@ import { useToast } from './Toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { playClick } from "./sound.js";
+import { saveHistory } from "./saveHistory";
+import { useCurrency } from "./CurrencyContext";
 
-// Animated value component
-function AnimatedValue({ value, prefix = "$", suffix = "" }) {
+// ✅ prefix passed as prop
+function AnimatedValue({ value, prefix = "", suffix = "" }) {
   const displayValue = useCountUp(value, 600);
   return <span>{prefix}{displayValue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}{suffix}</span>;
 }
@@ -18,7 +20,8 @@ function AnimatedPercent({ value, suffix = "%" }) {
   return <span>{displayValue.toFixed(1)}{suffix}</span>;
 }
 
-function Investment() {
+function Investment({ user }) {
+  const { symbol } = useCurrency();
   const [initial, setInitial] = useState(() => localStorage.getItem("inv_initial") || "");
   const [monthlyContribution, setMonthlyContribution] = useState(() => localStorage.getItem("inv_monthly") || "");
   const [annualReturn, setAnnualReturn] = useState(() => localStorage.getItem("inv_return") || "");
@@ -33,11 +36,20 @@ function Investment() {
   useEffect(() => { localStorage.setItem("inv_return", annualReturn); }, [annualReturn]);
   useEffect(() => { localStorage.setItem("inv_years", years); }, [years]);
 
+  const handleClear = () => {
+    setInitial(""); setMonthlyContribution(""); setAnnualReturn(""); setYears("");
+    setResult(null); setError("");
+    localStorage.removeItem("inv_initial");
+    localStorage.removeItem("inv_monthly");
+    localStorage.removeItem("inv_return");
+    localStorage.removeItem("inv_years");
+  };
+
   const handleSubmit = async () => {
-    if (!years || parseInt(years) <= 0) { 
+    if (!years || parseInt(years) <= 0) {
       setError("Please enter a valid time period.");
       showToast('error', 'Please enter a valid time period');
-      return; 
+      return;
     }
     setError("");
     setLoading(true);
@@ -53,13 +65,19 @@ function Investment() {
         }),
       });
       const data = await res.json();
-      if (data.error) { 
-        setError(data.error); 
+      if (data.error) {
+        setError(data.error);
         setResult(null);
         showToast('error', data.error);
       } else {
         setResult(data);
         showToast('success', 'Investment projection calculated!');
+        if (user) saveHistory(user.id, "investment", {
+          initial: parseFloat(initial) || 0,
+          monthly_contribution: parseFloat(monthlyContribution) || 0,
+          annual_return: parseFloat(annualReturn) || 0,
+          years: parseInt(years)
+        }, data);
       }
     } catch {
       setError("Could not connect to the server. Please try again.");
@@ -71,23 +89,12 @@ function Investment() {
 
   const exportToPDF = async () => {
     const element = document.getElementById('investment-results');
-    if (!element) {
-      showToast('error', 'No results to export');
-      return;
-    }
-    
+    if (!element) { showToast('error', 'No results to export'); return; }
     showToast('info', 'Generating PDF...');
     try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: '#0a0f1a'
-      });
+      const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#0a0f1a' });
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const imgWidth = 190;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
@@ -109,20 +116,21 @@ function Investment() {
       <div className="result-header">
         <h1 className="page-title">Investment Returns</h1>
         {result && (
-          <button className="btn-secondary export-btn" onClick={exportToPDF}  onClick={playClick}>
-            📄 Export PDF
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
+            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+          </div>
         )}
       </div>
       <p className="page-subtitle">See how your investments grow over time with compound returns.</p>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
         <div className="input-group">
-          <label className="input-label">Initial Investment ($)</label>
+          <label className="input-label">Initial Investment ({symbol})</label>
           <input type="number" placeholder="e.g. 1000" value={initial} onChange={(e) => setInitial(e.target.value)} />
         </div>
         <div className="input-group">
-          <label className="input-label">Monthly Contribution ($)</label>
+          <label className="input-label">Monthly Contribution ({symbol})</label>
           <input type="number" placeholder="e.g. 100" value={monthlyContribution} onChange={(e) => setMonthlyContribution(e.target.value)} />
         </div>
         <div className="input-group">
@@ -135,7 +143,7 @@ function Investment() {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={handleSubmit} disabled={loading} onClick={playClick}>
+      <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
         {loading ? "Calculating..." : "Calculate Returns"}
       </button>
 
@@ -150,19 +158,19 @@ function Investment() {
               <div className="result-card highlight">
                 <div className="label">Future Value</div>
                 <div className="value">
-                  <AnimatedValue value={result.future_value} />
+                  <AnimatedValue value={result.future_value} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
                 <div className="label">Total Contributed</div>
                 <div className="value">
-                  <AnimatedValue value={result.total_contributed} />
+                  <AnimatedValue value={result.total_contributed} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
                 <div className="label">Total Gains</div>
                 <div className="value" style={{ color: "#00ff88" }}>
-                  <AnimatedValue value={result.total_gains} />
+                  <AnimatedValue value={result.total_gains} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
@@ -179,8 +187,10 @@ function Investment() {
                 <BarChart data={barData} barCategoryGap="40%">
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                   <XAxis dataKey="name" tick={{ fill: "#8892a4", fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "#8892a4", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v) => `$${Number(v).toLocaleString()}`} contentStyle={{ background: "#111827", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", color: "#f0f4ff", fontSize: "13px" }} />
+                  <YAxis tick={{ fill: "#8892a4", fontSize: 11 }} axisLine={false} tickLine={false}
+                    tickFormatter={(v) => `${symbol}${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(v) => `${symbol}${Number(v).toLocaleString()}`}
+                    contentStyle={{ background: "#111827", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", color: "#f0f4ff", fontSize: "13px" }} />
                   <Legend wrapperStyle={{ color: "#8892a4", fontSize: "12px" }} />
                   <Bar dataKey="Contributed" stackId="a" fill="#0d6efd" radius={[0, 0, 6, 6]} />
                   <Bar dataKey="Gains" stackId="a" fill="#00ff88" radius={[6, 6, 0, 0]} />

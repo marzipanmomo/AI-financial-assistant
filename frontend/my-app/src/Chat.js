@@ -107,7 +107,7 @@ export default function Chat() {
       
       <div className="chat-suggestions">
         {suggestions.map((s, i) => (
-          <button key={i} className="suggestion-chip" onClick={() => sendMessage(s)} onClick={playClick}>
+          <button key={i} className="suggestion-chip" onClick={() => { playClick(); sendMessage(s); }}>
             {s}
           </button>
         ))}
@@ -151,7 +151,7 @@ export default function Chat() {
           disabled={isLoading}
           className="input-field"
         />
-        <button onClick={() => sendMessage()} disabled={isLoading || !input.trim()} className="btn-primary"  onClick={playClick}>
+        <button onClick={() => { playClick(); sendMessage(); }} disabled={isLoading || !input.trim()} className="btn-primary">
           Send
         </button>
       </div>

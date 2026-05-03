@@ -158,8 +158,7 @@ function Login({ onLogin }) {
           )}
 
           <button
-            onClick={handleSubmit}
-            onClick={playClick}
+            onClick={() => { playClick(); handleSubmit(); }}
             disabled={loading}
             style={{
               width: "100%", background: "#00ff88", color: "#000",

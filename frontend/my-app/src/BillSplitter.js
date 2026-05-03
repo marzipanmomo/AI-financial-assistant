@@ -5,14 +5,16 @@ import { useToast } from './Toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { playClick } from "./sound.js";
+import { useCurrency } from "./CurrencyContext";
 
-// Animated value component
-function AnimatedValue({ value, prefix = "$" }) {
+// ✅ prefix passed as prop
+function AnimatedValue({ value, prefix = "" }) {
   const displayValue = useCountUp(value, 600);
   return <span>{prefix}{displayValue.toFixed(2)}</span>;
 }
 
 function BillSplitter() {
+  const { symbol } = useCurrency();
   const [total, setTotal] = useState(() => localStorage.getItem("split_total") || "");
   const [people, setPeople] = useState(() => localStorage.getItem("split_people") || "");
   const [tipPercent, setTipPercent] = useState(() => localStorage.getItem("split_tip") || "0");
@@ -25,16 +27,24 @@ function BillSplitter() {
   useEffect(() => { localStorage.setItem("split_people", people); }, [people]);
   useEffect(() => { localStorage.setItem("split_tip", tipPercent); }, [tipPercent]);
 
+  const handleClear = () => {
+    setTotal(""); setPeople(""); setTipPercent("0");
+    setResult(null); setError("");
+    localStorage.removeItem("split_total");
+    localStorage.removeItem("split_people");
+    localStorage.removeItem("split_tip");
+  };
+
   const handleSubmit = async () => {
-    if (!total || parseFloat(total) <= 0) { 
+    if (!total || parseFloat(total) <= 0) {
       setError("Please enter a valid bill total.");
       showToast('error', 'Please enter a valid bill total');
-      return; 
+      return;
     }
-    if (!people || parseInt(people) < 2) { 
+    if (!people || parseInt(people) < 2) {
       setError("Please enter at least 2 people.");
       showToast('error', 'Please enter at least 2 people');
-      return; 
+      return;
     }
     setError("");
     setLoading(true);
@@ -49,8 +59,8 @@ function BillSplitter() {
         }),
       });
       const data = await res.json();
-      if (data.error) { 
-        setError(data.error); 
+      if (data.error) {
+        setError(data.error);
         setResult(null);
         showToast('error', data.error);
       } else {
@@ -67,23 +77,12 @@ function BillSplitter() {
 
   const exportToPDF = async () => {
     const element = document.getElementById('split-results');
-    if (!element) {
-      showToast('error', 'No results to export');
-      return;
-    }
-    
+    if (!element) { showToast('error', 'No results to export'); return; }
     showToast('info', 'Generating PDF...');
     try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: '#0a0f1a'
-      });
+      const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#0a0f1a' });
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const imgWidth = 190;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
@@ -102,16 +101,17 @@ function BillSplitter() {
       <div className="result-header">
         <h1 className="page-title">Bill Splitter</h1>
         {result && (
-          <button className="btn-secondary export-btn" onClick={exportToPDF}>
-            📄 Export PDF
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
+            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+          </div>
         )}
       </div>
       <p className="page-subtitle">Split any bill fairly between friends, with tip included.</p>
 
       <div className="input-row">
         <div className="input-group">
-          <label className="input-label">Bill Total ($)</label>
+          <label className="input-label">Bill Total ({symbol})</label>
           <input type="number" placeholder="e.g. 120" value={total} onChange={(e) => setTotal(e.target.value)} />
         </div>
         <div className="input-group">
@@ -128,8 +128,7 @@ function BillSplitter() {
         {TIP_PRESETS.map((t) => (
           <button
             key={t}
-            onClick={() => setTipPercent(t)}
-            onClick={playClick}
+            onClick={() => { playClick(); setTipPercent(t); }}
             style={{
               padding: "6px 14px",
               borderRadius: "20px",
@@ -148,7 +147,7 @@ function BillSplitter() {
         ))}
       </div>
 
-      <button className="btn-primary" onClick={handleSubmit} disabled={loading}  onClick={playClick}>
+      <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
         {loading ? "Splitting..." : "Split Bill"}
       </button>
 
@@ -163,25 +162,25 @@ function BillSplitter() {
               <div className="result-card">
                 <div className="label">Bill Total</div>
                 <div className="value">
-                  <AnimatedValue value={result.original_total} />
+                  <AnimatedValue value={result.original_total} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
                 <div className="label">Tip ({result.tip_percent}%)</div>
                 <div className="value">
-                  <AnimatedValue value={result.tip_amount} />
+                  <AnimatedValue value={result.tip_amount} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
                 <div className="label">Grand Total</div>
                 <div className="value">
-                  <AnimatedValue value={result.grand_total} />
+                  <AnimatedValue value={result.grand_total} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card highlight">
                 <div className="label">Each Person Pays</div>
                 <div className="value" style={{ color: '#00ff88', fontSize: '28px' }}>
-                  <AnimatedValue value={result.per_person} />
+                  <AnimatedValue value={result.per_person} prefix={symbol} />
                 </div>
               </div>
             </div>
@@ -189,7 +188,7 @@ function BillSplitter() {
             <div className="ai-insight" style={{ marginTop: "20px" }}>
               <div className="ai-label">✦ Summary</div>
               <p>
-                Split between <strong>{result.people} people</strong> — each pays <strong>${result.per_person}</strong> including a {result.tip_percent}% tip.
+                Split between <strong>{result.people} people</strong> — each pays <strong>{symbol}{result.per_person}</strong> including a {result.tip_percent}% tip.
               </p>
             </div>
           </div>

@@ -4,14 +4,16 @@ import { useToast } from './Toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { playClick } from "./sound.js";
+import { useCurrency } from "./CurrencyContext";
 
-// Animated value component
-function AnimatedValue({ value, prefix = "$", suffix = "" }) {
+// ✅ prefix passed as prop — no outer scope reference
+function AnimatedValue({ value, prefix = "", suffix = "" }) {
   const displayValue = useCountUp(value, 600);
   return <span>{prefix}{displayValue.toFixed(2)}{suffix}</span>;
 }
 
 function Expenses() {
+  const { symbol } = useCurrency();
   const [expenses, setExpenses] = useState(() => {
     try { return JSON.parse(localStorage.getItem("expenses")) || []; }
     catch { return []; }
@@ -49,19 +51,11 @@ function Expenses() {
       showToast('error', 'No results to export');
       return;
     }
-    
     showToast('info', 'Generating PDF...');
     try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: '#0a0f1a'
-      });
+      const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#0a0f1a' });
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const imgWidth = 190;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
@@ -78,7 +72,7 @@ function Expenses() {
       <div className="result-header">
         <h2 className="page-title">Expense Tracker</h2>
         {expenses.length > 0 && (
-          <button className="btn-secondary export-btn" onClick={exportToPDF}  onClick={playClick}>
+          <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>
             📄 Export PDF
           </button>
         )}
@@ -95,7 +89,7 @@ function Expenses() {
       </div>
 
       <div className="input-group">
-        <label>Amount ($)</label>
+        <label>Amount ({symbol})</label>
         <input
           type="number"
           value={amount}
@@ -104,13 +98,13 @@ function Expenses() {
         />
       </div>
 
-      <button onClick={addExpense} className="btn-primary"  onClick={playClick}>Add Expense</button>
+      <button onClick={() => { playClick(); addExpense(); }} className="btn-primary">Add Expense</button>
 
       <div id="expenses-results">
         <div className="result-card" style={{ marginTop: "24px" }}>
           <div className="label">Total Expenses</div>
           <div className="value" style={{ color: '#ff4d6d' }}>
-            <AnimatedValue value={total} />
+            <AnimatedValue value={total} prefix={symbol} />
           </div>
         </div>
 
@@ -119,9 +113,12 @@ function Expenses() {
             {expenses.map(exp => (
               <li key={exp.id}>
                 <span className="item-name">{exp.category}</span>
-                <span className="item-amount">${exp.amount.toFixed(2)}</span>
-                <button className="btn-danger" style={{ padding: "4px 12px", fontSize: "12px" }} 
-                onClick={() => deleteExpense(exp.id)} onClick={playClick}>Delete</button>
+                <span className="item-amount">{symbol}{exp.amount.toFixed(2)}</span>
+                <button
+                  className="btn-danger"
+                  style={{ padding: "4px 12px", fontSize: "12px" }}
+                  onClick={() => { playClick(); deleteExpense(exp.id); }}
+                >Delete</button>
               </li>
             ))}
           </ul>

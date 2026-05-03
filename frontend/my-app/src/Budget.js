@@ -6,16 +6,19 @@ import { useToast } from './Toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { playClick } from "./sound.js";
+import { saveHistory } from "./saveHistory";
+import { useCurrency } from "./CurrencyContext";
 
 const PIE_COLORS = ["#00ff88","#00bcd4","#f59e0b","#e91e63","#9c27b0","#3f51b5","#009688","#ff5722"];
 
-// Animated value component
-function AnimatedValue({ value, prefix = "$", suffix = "" }) {
+// ✅ symbol passed as prop — not read from outer scope
+function AnimatedValue({ value, prefix = "", suffix = "" }) {
   const displayValue = useCountUp(value, 600);
   return <span>{prefix}{displayValue.toFixed(2)}{suffix}</span>;
 }
 
-function Budget() {
+function Budget({ user }) {
+  const { symbol } = useCurrency();
   const [income, setIncome] = useState(() => localStorage.getItem("budget_income") || "");
   const [expenses, setExpenses] = useState(() => {
     try { return JSON.parse(localStorage.getItem("budget_expenses")) || [{ name: "", amount: "" }]; }
@@ -28,6 +31,15 @@ function Budget() {
 
   useEffect(() => { localStorage.setItem("budget_income", income); }, [income]);
   useEffect(() => { localStorage.setItem("budget_expenses", JSON.stringify(expenses)); }, [expenses]);
+
+  const handleClear = () => {
+    setIncome("");
+    setExpenses([{ name: "", amount: "" }]);
+    setResult(null);
+    setError("");
+    localStorage.removeItem("budget_income");
+    localStorage.removeItem("budget_expenses");
+  };
 
   const addExpense = () => setExpenses([...expenses, { name: "", amount: "" }]);
 
@@ -62,6 +74,7 @@ function Budget() {
       } else {
         setResult(data);
         showToast('success', 'Budget calculated successfully!');
+        if (user) saveHistory(user.id, "budget", { income: parseFloat(income), expenses: validExpenses }, data);
       }
     } catch {
       setError("Could not connect to the server. Please try again.");
@@ -108,9 +121,10 @@ function Budget() {
       <div className="result-header">
         <h1 className="page-title">Budget Calculator</h1>
         {result && (
-          <button className="btn-secondary export-btn" onClick={exportToPDF}  onClick={playClick}>
-            📄 Export PDF
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
+            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+          </div>
         )}
       </div>
       <p className="page-subtitle">Enter your income and expenses to get an AI-powered breakdown.</p>
@@ -125,14 +139,14 @@ function Budget() {
       {expenses.map((expense, index) => (
         <div key={index} className="expense-row">
           <input type="text" placeholder="Category (e.g. Rent)" value={expense.name} onChange={(e) => updateExpense(index, "name", e.target.value)} />
-          <input type="number" placeholder="Amount ($)" value={expense.amount} onChange={(e) => updateExpense(index, "amount", e.target.value)} />
-          <button className="btn-danger" onClick={() => removeExpense(index)} onClick={playClick}>Remove</button>
+          <input type="number" placeholder={`Amount (${symbol})`} value={expense.amount} onChange={(e) => updateExpense(index, "amount", e.target.value)} />
+          <button className="btn-danger" onClick={() => { playClick(); removeExpense(index); }}>Remove</button>
         </div>
       ))}
 
       <div style={{ display: "flex", gap: "12px", marginTop: "12px" }}>
-        <button className="btn-secondary" onClick={addExpense}  onClick={playClick}>+ Add Expense</button>
-        <button className="btn-primary" onClick={handleSubmit} disabled={loading}  onClick={playClick}>
+        <button className="btn-secondary" onClick={() => { playClick(); addExpense(); }}>+ Add Expense</button>
+        <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
           {loading ? "Calculating..." : "Calculate"}
         </button>
       </div>
@@ -148,19 +162,19 @@ function Budget() {
               <div className="result-card">
                 <div className="label">Income</div>
                 <div className="value">
-                  <AnimatedValue value={result.income} />
+                  <AnimatedValue value={result.income} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
                 <div className="label">Total Spent</div>
                 <div className="value">
-                  <AnimatedValue value={result.total_spent} />
+                  <AnimatedValue value={result.total_spent} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card highlight">
                 <div className="label">Remaining</div>
                 <div className="value" style={{ color: result.remaining >= 0 ? '#00ff88' : '#ff4d6d' }}>
-                  <AnimatedValue value={result.remaining} />
+                  <AnimatedValue value={result.remaining} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
@@ -180,7 +194,7 @@ function Budget() {
                       <Pie data={pieData} cx="50%" cy="50%" innerRadius={65} outerRadius={105} paddingAngle={3} dataKey="value">
                         {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(v) => `$${v}`} contentStyle={{ background: "#111827", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", color: "#f0f4ff", fontSize: "13px" }} />
+                      <Tooltip formatter={(v) => `${symbol}${v}`} contentStyle={{ background: "#111827", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", color: "#f0f4ff", fontSize: "13px" }} />
                       <Legend wrapperStyle={{ color: "#8892a4", fontSize: "12px" }} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -195,7 +209,7 @@ function Budget() {
                   {result.breakdown.map((item, i) => (
                     <li key={i}>
                       <span className="item-name">{item.name}</span>
-                      <span className="item-amount">${item.amount}</span>
+                      <span className="item-amount">{symbol}{item.amount}</span>
                       <span className="item-pct">{item.percentage}%</span>
                     </li>
                   ))}

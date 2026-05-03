@@ -759,3 +759,13 @@ input::placeholder {
   .compare-grid { grid-template-columns: 1fr; }
   .compare-results { grid-template-columns: 1fr; }
 }
+
+.currency-select option {
+  background: #111827;
+  color: #f0f4ff;
+}
+
+.light .currency-select option {
+  background: #ffffff;
+  color: #111827;
+}

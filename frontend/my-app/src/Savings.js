@@ -5,13 +5,17 @@ import { useToast } from './Toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { playClick } from "./sound.js";
+import { saveHistory } from "./saveHistory";
+import { useCurrency } from "./CurrencyContext";
 
-function AnimatedValue({ value, prefix = "$" }) {
+// ✅ prefix passed as prop
+function AnimatedValue({ value, prefix = "" }) {
   const displayValue = useCountUp(value, 600);
   return <span>{prefix}{displayValue.toFixed(2)}</span>;
 }
 
-function Savings() {
+function Savings({ user }) {
+  const { symbol } = useCurrency();
   const [goalAmount, setGoalAmount] = useState(() => localStorage.getItem("sav_goal") || "");
   const [months, setMonths] = useState(() => localStorage.getItem("sav_months") || "");
   const [currentSavings, setCurrentSavings] = useState(() => localStorage.getItem("sav_current") || "");
@@ -24,16 +28,24 @@ function Savings() {
   useEffect(() => { localStorage.setItem("sav_months", months); }, [months]);
   useEffect(() => { localStorage.setItem("sav_current", currentSavings); }, [currentSavings]);
 
+  const handleClear = () => {
+    setGoalAmount(""); setMonths(""); setCurrentSavings("");
+    setResult(null); setError("");
+    localStorage.removeItem("sav_goal");
+    localStorage.removeItem("sav_months");
+    localStorage.removeItem("sav_current");
+  };
+
   const handleSubmit = async () => {
-    if (!goalAmount || parseFloat(goalAmount) <= 0) { 
+    if (!goalAmount || parseFloat(goalAmount) <= 0) {
       setError("Please enter a valid savings goal.");
       showToast('error', 'Please enter a valid savings goal');
-      return; 
+      return;
     }
-    if (!months || parseInt(months) <= 0) { 
+    if (!months || parseInt(months) <= 0) {
       setError("Please enter a valid timeframe.");
       showToast('error', 'Please enter a valid timeframe');
-      return; 
+      return;
     }
     setError("");
     setLoading(true);
@@ -48,13 +60,18 @@ function Savings() {
         }),
       });
       const data = await res.json();
-      if (data.error) { 
-        setError(data.error); 
+      if (data.error) {
+        setError(data.error);
         setResult(null);
         showToast('error', data.error);
       } else {
         setResult(data);
         showToast('success', 'Savings plan created successfully!');
+        if (user) saveHistory(user.id, "savings", {
+          goal_amount: parseFloat(goalAmount),
+          months: parseInt(months),
+          current_savings: parseFloat(currentSavings) || 0
+        }, data);
       }
     } catch {
       setError("Could not connect to the server. Please try again.");
@@ -66,22 +83,12 @@ function Savings() {
 
   const exportToPDF = async () => {
     const element = document.getElementById('savings-results');
-    if (!element) {
-      showToast('error', 'No results to export');
-      return;
-    }
+    if (!element) { showToast('error', 'No results to export'); return; }
     showToast('info', 'Generating PDF...');
     try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: '#0a0f1a'
-      });
+      const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#0a0f1a' });
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const imgWidth = 190;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
@@ -98,16 +105,17 @@ function Savings() {
       <div className="result-header">
         <h1 className="page-title">Savings Goal Planner</h1>
         {result && (
-          <button className="btn-secondary export-btn" onClick={exportToPDF}  onClick={playClick}>
-            📄 Export PDF
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
+            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+          </div>
         )}
       </div>
       <p className="page-subtitle">Set your savings target and get a personalized plan to reach it.</p>
 
       <div className="input-row">
         <div className="input-group">
-          <label className="input-label">Savings Goal ($)</label>
+          <label className="input-label">Savings Goal ({symbol})</label>
           <input type="number" placeholder="e.g. 5000" value={goalAmount} onChange={(e) => setGoalAmount(e.target.value)} />
         </div>
         <div className="input-group">
@@ -115,12 +123,12 @@ function Savings() {
           <input type="number" placeholder="e.g. 12" value={months} onChange={(e) => setMonths(e.target.value)} />
         </div>
         <div className="input-group">
-          <label className="input-label">Current Savings ($)</label>
+          <label className="input-label">Current Savings ({symbol})</label>
           <input type="number" placeholder="e.g. 500" value={currentSavings} onChange={(e) => setCurrentSavings(e.target.value)} />
         </div>
       </div>
 
-      <button className="btn-primary" onClick={handleSubmit} disabled={loading} onClick={playClick}>
+      <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
         {loading ? "Planning..." : "Create My Plan"}
       </button>
 
@@ -135,31 +143,31 @@ function Savings() {
               <div className="result-card highlight">
                 <div className="label">Goal</div>
                 <div className="value">
-                  <AnimatedValue value={result.goal_amount} />
+                  <AnimatedValue value={result.goal_amount} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
                 <div className="label">Still Needed</div>
                 <div className="value">
-                  <AnimatedValue value={result.remaining_needed} />
+                  <AnimatedValue value={result.remaining_needed} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
                 <div className="label">Per Month</div>
                 <div className="value">
-                  <AnimatedValue value={result.monthly_target} />
+                  <AnimatedValue value={result.monthly_target} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
                 <div className="label">Per Week</div>
                 <div className="value">
-                  <AnimatedValue value={result.weekly_target} />
+                  <AnimatedValue value={result.weekly_target} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
                 <div className="label">Per Day</div>
                 <div className="value">
-                  <AnimatedValue value={result.daily_target} />
+                  <AnimatedValue value={result.daily_target} prefix={symbol} />
                 </div>
               </div>
             </div>

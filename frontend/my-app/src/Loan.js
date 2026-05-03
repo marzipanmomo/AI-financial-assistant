@@ -5,14 +5,17 @@ import { useToast } from './Toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { playClick } from "./sound.js";
+import { saveHistory } from "./saveHistory";
+import { useCurrency } from "./CurrencyContext";
 
-// Animated value component
-function AnimatedValue({ value, prefix = "$", suffix = "" }) {
+// ✅ prefix passed as prop
+function AnimatedValue({ value, prefix = "", suffix = "" }) {
   const displayValue = useCountUp(value, 600);
   return <span>{prefix}{displayValue.toFixed(2)}{suffix}</span>;
 }
 
-function Loan() {
+function Loan({ user }) {
+  const { symbol } = useCurrency();
   const [principal, setPrincipal] = useState(() => localStorage.getItem("loan_principal") || "");
   const [annualRate, setAnnualRate] = useState(() => localStorage.getItem("loan_rate") || "");
   const [months, setMonths] = useState(() => localStorage.getItem("loan_months") || "");
@@ -25,16 +28,24 @@ function Loan() {
   useEffect(() => { localStorage.setItem("loan_rate", annualRate); }, [annualRate]);
   useEffect(() => { localStorage.setItem("loan_months", months); }, [months]);
 
+  const handleClear = () => {
+    setPrincipal(""); setAnnualRate(""); setMonths("");
+    setResult(null); setError("");
+    localStorage.removeItem("loan_principal");
+    localStorage.removeItem("loan_rate");
+    localStorage.removeItem("loan_months");
+  };
+
   const handleSubmit = async () => {
-    if (!principal || parseFloat(principal) <= 0) { 
+    if (!principal || parseFloat(principal) <= 0) {
       setError("Please enter a valid loan amount.");
       showToast('error', 'Please enter a valid loan amount');
-      return; 
+      return;
     }
-    if (!months || parseInt(months) <= 0) { 
+    if (!months || parseInt(months) <= 0) {
       setError("Please enter a valid duration.");
       showToast('error', 'Please enter a valid duration');
-      return; 
+      return;
     }
     setError("");
     setLoading(true);
@@ -49,13 +60,18 @@ function Loan() {
         }),
       });
       const data = await res.json();
-      if (data.error) { 
-        setError(data.error); 
+      if (data.error) {
+        setError(data.error);
         setResult(null);
         showToast('error', data.error);
       } else {
         setResult(data);
         showToast('success', 'EMI calculated successfully!');
+        if (user) saveHistory(user.id, "loan", {
+          principal: parseFloat(principal),
+          annual_rate: parseFloat(annualRate) || 0,
+          months: parseInt(months)
+        }, data);
       }
     } catch {
       setError("Could not connect to the server. Please try again.");
@@ -67,23 +83,12 @@ function Loan() {
 
   const exportToPDF = async () => {
     const element = document.getElementById('loan-results');
-    if (!element) {
-      showToast('error', 'No results to export');
-      return;
-    }
-    
+    if (!element) { showToast('error', 'No results to export'); return; }
     showToast('info', 'Generating PDF...');
     try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: '#0a0f1a'
-      });
+      const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#0a0f1a' });
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const imgWidth = 190;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
@@ -100,16 +105,17 @@ function Loan() {
       <div className="result-header">
         <h1 className="page-title">Loan & EMI Calculator</h1>
         {result && (
-          <button className="btn-secondary export-btn" onClick={exportToPDF}  onClick={playClick}>
-            📄 Export PDF
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
+            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+          </div>
         )}
       </div>
       <p className="page-subtitle">Find out your monthly payment and total interest on any loan.</p>
 
       <div className="input-row">
         <div className="input-group">
-          <label className="input-label">Loan Amount ($)</label>
+          <label className="input-label">Loan Amount ({symbol})</label>
           <input type="number" placeholder="e.g. 10000" value={principal} onChange={(e) => setPrincipal(e.target.value)} />
         </div>
         <div className="input-group">
@@ -122,7 +128,7 @@ function Loan() {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={handleSubmit} disabled={loading}  onClick={playClick}>
+      <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
         {loading ? "Calculating..." : "Calculate EMI"}
       </button>
 
@@ -137,19 +143,19 @@ function Loan() {
               <div className="result-card highlight">
                 <div className="label">Monthly EMI</div>
                 <div className="value">
-                  <AnimatedValue value={result.emi} />
+                  <AnimatedValue value={result.emi} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
                 <div className="label">Total Payment</div>
                 <div className="value">
-                  <AnimatedValue value={result.total_payment} />
+                  <AnimatedValue value={result.total_payment} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">
                 <div className="label">Total Interest</div>
                 <div className="value">
-                  <AnimatedValue value={result.total_interest} />
+                  <AnimatedValue value={result.total_interest} prefix={symbol} />
                 </div>
               </div>
               <div className="result-card">

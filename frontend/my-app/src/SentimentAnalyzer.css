@@ -1,0 +1,154 @@
+.sa-model-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(0, 255, 136, 0.06);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 20px;
+  font-size: 11px;
+  color: #00ff88;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-top: 4px;
+}
+
+.sa-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00ff88;
+  box-shadow: 0 0 6px #00ff88;
+  animation: sa-pulse 2s infinite;
+}
+
+@keyframes sa-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.sa-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  background: #0d1420;
+  color: #f0f4ff;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  resize: vertical;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+  line-height: 1.6;
+  min-height: 100px;
+}
+
+.sa-textarea:focus {
+  border-color: rgba(0, 255, 136, 0.4);
+}
+
+.sa-textarea::placeholder {
+  color: #4a5568;
+}
+
+.sa-result {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1.5px solid;
+  border-radius: 14px;
+  animation: sa-fade-in 0.3s ease;
+}
+
+@keyframes sa-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.sa-verdict {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sa-emoji {
+  font-size: 40px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.sa-label {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  font-family: 'Syne', sans-serif;
+}
+
+.sa-confidence {
+  font-size: 12px;
+  color: #8892a4;
+  margin-top: 2px;
+}
+
+.sa-badge {
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.sa-prob-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a5568;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.sa-probabilities {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sa-prob-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sa-prob-label {
+  width: 68px;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.sa-bar-bg {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 99px;
+  height: 7px;
+  overflow: hidden;
+}
+
+.sa-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 2px;
+}
+
+.sa-prob-value {
+  width: 42px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+  color: #8892a4;
+  flex-shrink: 0;
+}

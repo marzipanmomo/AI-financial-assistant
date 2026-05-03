@@ -11,6 +11,10 @@ function Currency() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const handleClear = () => {
+    setAmount(""); setResult(null); setError("");
+  };
+
   const handleSwap = () => {
     setFromCurrency(toCurrency);
     setToCurrency(fromCurrency);
@@ -40,7 +44,12 @@ function Currency() {
 
   return (
     <div className="page-card">
-      <h1 className="page-title">Currency Converter</h1>
+      <div className="result-header">
+        <h1 className="page-title">Currency Converter</h1>
+        {result && (
+          <button className="btn-secondary" onClick={() => { playClick(); handleClear(); }}>✕ Clear</button>
+        )}
+      </div>
       <p className="page-subtitle">Convert between world currencies using live exchange rates.</p>
 
       <div className="input-group">
@@ -60,7 +69,7 @@ function Currency() {
             {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
           </select>
         </div>
-        <button className="btn-secondary swap-btn" onClick={handleSwap} title="Swap currencies"  onClick={playClick}>⇄</button>
+        <button className="btn-secondary swap-btn" onClick={() => { playClick(); handleSwap(); }} title="Swap currencies">⇄</button>
         <div className="input-group" style={{ flex: 1 }}>
           <label className="input-label">To</label>
           <select value={toCurrency} onChange={(e) => setToCurrency(e.target.value)}>
@@ -69,7 +78,7 @@ function Currency() {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={handleSubmit} disabled={loading}  onClick={playClick}>
+      <button className="btn-primary" onClick={() => { playClick(); handleSubmit(); }} disabled={loading}>
         {loading ? "Converting..." : "Convert"}
       </button>
 
