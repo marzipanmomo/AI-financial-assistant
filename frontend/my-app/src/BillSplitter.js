@@ -102,7 +102,7 @@ function BillSplitter() {
         <h1 className="page-title">Bill Splitter</h1>
         <div style={{ display: "flex", gap: "8px" }}>
           {result && (
-            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>Export To PDF</button>
           )}
         </div>
       </div>

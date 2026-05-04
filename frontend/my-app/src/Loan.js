@@ -106,7 +106,7 @@ function Loan({ user }) {
       <div className="result-header">
         <h1 className="page-title">Loan & EMI Calculator</h1>
           {result && (
-            <button className="btn-primary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+            <button className="btn-primary export-btn" onClick={() => { playClick(); exportToPDF(); }}>Export To PDF</button>
           )}
       </div>
       <p className="page-subtitle">Find out your monthly payment and total interest on any loan.</p>

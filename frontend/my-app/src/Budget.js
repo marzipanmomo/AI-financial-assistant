@@ -122,7 +122,7 @@ function Budget({ user }) {
       <div className="result-header">
         <h1 className="page-title">Budget Calculator</h1>
           {result && (
-            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+            <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>Export To PDF</button>
           )}
       </div>
       <p className="page-subtitle">Enter your income and expenses to get an AI-powered breakdown.</p>

@@ -81,7 +81,7 @@ function ThemeToggle() {
       setTheme(theme === "dark" ? "light" : "dark");
       playClick();
     }}>
-    {theme === "dark" ? "🌞 Light" : "🌙 Dark"}
+    {theme === "dark" ? "Light" : "Dark"}
   </button> 
   );
 }
@@ -90,77 +90,77 @@ function Home() {
   return (
     <div className="home-hero">
       <div className="home-badge">AI-POWERED INSIGHTS</div>
-      <h2>Smarter Financial<br /><span>Decisions</span> Powered by AI</h2>
-      <p>Track spending, plan savings, and receive intelligent financial insights — all in one powerful AI-driven platform.</p>
+      <h2>Smarter Financial<br /><span>Decisions</span></h2>
+      <p>Track spending, plan savings, and receive intelligent financial insights.</p>
       <div className="home-cards">
         <Link to="/budget" className="home-card" onClick={playClick}>
-          <div className="card-icon">💰</div>
+          <div className="card-icon"></div>
           <div className="card-title">Budget</div>
           <div className="card-desc">Track income & expenses</div>
         </Link>
         <Link to="/expenses" className="home-card" onClick={playClick}>
-          <div className="card-icon">📊</div>
+          <div className="card-icon"></div>
           <div className="card-title">Expenses</div>
           <div className="card-desc">Analyze your spending</div>
         </Link>
         <Link to="/savings" className="home-card" onClick={playClick}>
-          <div className="card-icon">🎯</div>
+          <div className="card-icon"></div>
           <div className="card-title">Savings</div>
           <div className="card-desc">Plan your goals</div>
         </Link>
         <Link to="/tips" className="home-card" onClick={playClick}>
-          <div className="card-icon">💡</div>
+          <div className="card-icon"></div>
           <div className="card-title">Tips</div>
           <div className="card-desc">Daily financial wisdom</div>
         </Link>
         <Link to="/loan" className="home-card" onClick={playClick}>
-          <div className="card-icon">🏦</div>
+          <div className="card-icon"></div>
           <div className="card-title">Loan & EMI</div>
           <div className="card-desc">Calculate loan payments</div>
         </Link>
         <Link to="/networth" className="home-card" onClick={playClick}>
-          <div className="card-icon">📈</div>
+          <div className="card-icon"></div>
           <div className="card-title">Net Worth</div>
           <div className="card-desc">Track your wealth</div>
         </Link>
         <Link to="/split" className="home-card" onClick={playClick}>
-          <div className="card-icon">🍽️</div>
+          <div className="card-icon"></div>
           <div className="card-title">Bill Splitter</div>
           <div className="card-desc">Split bills with friends</div>
         </Link>
         <Link to="/investment" className="home-card" onClick={playClick}>
-          <div className="card-icon">🚀</div>
+          <div className="card-icon"></div>
           <div className="card-title">Investment</div>
           <div className="card-desc">Calculate ROI & returns</div>
         </Link>
         <Link to="/chat" className="home-card" onClick={playClick}>
-          <div className="card-icon">✦</div>
+          <div className="card-icon"></div>
           <div className="card-title">AI Chat</div>
           <div className="card-desc">Ask anything about finance</div>
         </Link>
 
         <Link to="/currency" className="home-card" onClick={playClick}>
-          <div className="card-icon">💱</div>
+          <div className="card-icon"></div>
           <div className="card-title">Currency</div>
           <div className="card-desc">Convert world currencies</div>
         </Link>
         <Link to="/sentiment" className="home-card" onClick={playClick}>
-          <div className="card-icon">📡</div>
+          <div className="card-icon"></div>
           <div className="card-title">Sentiment</div>
           <div className="card-desc">Analyze financial sentiment</div>
         </Link>
         <Link to="/tax" className="home-card" onClick={playClick}>
-          <div className="card-icon">🧾</div>
+          <div className="card-icon"></div>
           <div className="card-title">Tax Estimator</div>
           <div className="card-desc">Estimate your federal tax</div>
         </Link>
         <Link to="/history" className="home-card" onClick={playClick}>
-          <div className="card-icon">🕓</div>
+          <div className="card-icon"></div>
           <div className="card-title">History</div>
           <div className="card-desc">View past calculations</div>
         </Link>
         <Link to="/dashboard" className="home-card" onClick={playClick}>
-          <div className="card-icon">🗂️</div>
+          <div className="card-icon"></div>
           <div className="card-title">Dashboard</div>
           <div className="card-desc">Your financial overview</div>
         </Link>
@@ -176,22 +176,22 @@ function AppContent({ user, onLogout }) {
       <nav className="navbar">
         <Link to="/" className="navbar-brand">
           <div className="logo-icon">$</div>
-          FinanceAI
+          Fintrix      
         </Link>
         <ul className="navbar-links">
           <NavLink to="/">Home</NavLink>
-          <NavLink to="/budget">Budget</NavLink>
+          <NavLink to="/budget">Budgeting</NavLink>
           <NavLink to="/expenses">Expenses</NavLink>
           <NavLink to="/savings">Savings</NavLink>
           <NavLink to="/tips">Tips</NavLink>
-          <NavLink to="/loan">Loan</NavLink>
+          <NavLink to="/loan">Loans</NavLink>
           <NavLink to="/networth">Net Worth</NavLink>
-          <NavLink to="/split">Bill Split</NavLink>
-          <NavLink to="/investment">Investment</NavLink>
-          <NavLink to="/chat">AI Chat</NavLink>
-          <NavLink to="/currency">Currency</NavLink>
-          <NavLink to="/sentiment">Sentiment</NavLink>
-          <NavLink to="/tax">Tax</NavLink>
+          <NavLink to="/split">Bill-Splitter</NavLink>
+          <NavLink to="/investment">Investments</NavLink>
+          <NavLink to="/chat">Chat</NavLink>
+          <NavLink to="/currency">Currency-Convert</NavLink>
+          <NavLink to="/sentiment">Sentiments</NavLink>
+          <NavLink to="/tax">Taxes</NavLink>
           <NavLink to="/history">History</NavLink>
           <NavLink to="/dashboard">Dashboard</NavLink>
         </ul>

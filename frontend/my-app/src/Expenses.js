@@ -73,7 +73,7 @@ function Expenses() {
         <h2 className="page-title">Expense Tracker</h2>
         {expenses.length > 0 && (
           <button className="btn-secondary export-btn" onClick={() => { playClick(); exportToPDF(); }}>
-            📄 Export PDF
+            Export To PDF
           </button>
         )}
       </div>

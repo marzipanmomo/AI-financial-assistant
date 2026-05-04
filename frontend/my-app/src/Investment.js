@@ -117,7 +117,7 @@ function Investment({ user }) {
       <div className="result-header">
         <h1 className="page-title">Investment Returns</h1>
           {result && (
-            <button className="btn-primary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+            <button className="btn-primary export-btn" onClick={() => { playClick(); exportToPDF(); }}>Export To PDF</button>
           )}
       </div>
       <p className="page-subtitle">See how your investments grow over time with compound returns.</p>

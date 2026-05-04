@@ -118,7 +118,7 @@ function NetWorth({ user }) {
       <div className="result-header">
         <h1 className="page-title">Net Worth Tracker</h1>
           {result && (
-            <button className="btn-primary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+            <button className="btn-primary export-btn" onClick={() => { playClick(); exportToPDF(); }}>Export To PDF</button>
           )}
       </div>
       <p className="page-subtitle">Add your assets and liabilities to calculate your true financial picture.</p>

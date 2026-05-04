@@ -106,7 +106,7 @@ function Savings({ user }) {
       <div className="result-header">
         <h1 className="page-title">Savings Goal Planner</h1>
           {result && (
-              <button className="btn-primary export-btn" onClick={() => { playClick(); exportToPDF(); }}>📄 Export PDF</button>
+              <button className="btn-primary export-btn" onClick={() => { playClick(); exportToPDF(); }}>Export To PDF</button>
           )}
       </div>
       <p className="page-subtitle">Set your savings target and get a personalized plan to reach it.</p>
