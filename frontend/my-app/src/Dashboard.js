@@ -81,7 +81,7 @@ function Dashboard({ user }) {
             {bud && (
               <Link to="/budget" style={{ textDecoration: "none" }} onClick={playClick}>
                 <div className="result-card" style={{ cursor: "pointer" }}>
-                  <div className="label">💰 Budget Remaining</div>
+                  <div className="label">Budget Remaining</div>
                   <div className="value" style={{ color: bud.remaining >= 0 ? "#00ff88" : "#ff4d6d", fontSize: "18px" }}>
                     {symbol}{bud.remaining?.toLocaleString()}
                   </div>
@@ -92,7 +92,7 @@ function Dashboard({ user }) {
             {nw && (
               <Link to="/networth" style={{ textDecoration: "none" }} onClick={playClick}>
                 <div className="result-card" style={{ cursor: "pointer" }}>
-                  <div className="label">📈 Net Worth</div>
+                  <div className="label">Net Worth</div>
                   <div className="value" style={{ color: nw.net_worth >= 0 ? "#00ff88" : "#ff4d6d", fontSize: "18px" }}>
                     {symbol}{nw.net_worth?.toLocaleString()}
                   </div>
@@ -103,7 +103,7 @@ function Dashboard({ user }) {
             {sav && (
               <Link to="/savings" style={{ textDecoration: "none" }} onClick={playClick}>
                 <div className="result-card" style={{ cursor: "pointer" }}>
-                  <div className="label">🎯 Monthly Savings Target</div>
+                  <div className="label">Monthly Savings Target</div>
                   <div className="value" style={{ fontSize: "18px" }}>{symbol}{sav.monthly_target?.toLocaleString()}</div>
                   <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>goal: {symbol}{sav.goal_amount?.toLocaleString()}</div>
                 </div>
@@ -112,7 +112,7 @@ function Dashboard({ user }) {
             {inv && (
               <Link to="/investment" style={{ textDecoration: "none" }} onClick={playClick}>
                 <div className="result-card" style={{ cursor: "pointer" }}>
-                  <div className="label">🚀 Investment Future Value</div>
+                  <div className="label">Investment Future Value</div>
                   <div className="value" style={{ color: "#00ff88", fontSize: "18px" }}>{symbol}{inv.future_value?.toLocaleString()}</div>
                   <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>{inv.roi}% ROI</div>
                 </div>
@@ -121,7 +121,7 @@ function Dashboard({ user }) {
             {loan && (
               <Link to="/loan" style={{ textDecoration: "none" }} onClick={playClick}>
                 <div className="result-card" style={{ cursor: "pointer" }}>
-                  <div className="label">🏦 Loan EMI</div>
+                  <div className="label">Loan EMI</div>
                   <div className="value" style={{ fontSize: "18px" }}>{symbol}{loan.emi}/mo</div>
                   <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>total interest: {symbol}{loan.total_interest?.toLocaleString()}</div>
                 </div>
