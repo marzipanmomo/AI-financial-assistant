@@ -3,6 +3,7 @@ import Skeleton from "./Skeleton";
 import { playClick } from "./sound.js";
 import { saveHistory } from "./saveHistory";
 import { useCurrency } from "./CurrencyContext";
+import ModelSentimentBadge from "./ModelSentimentBadge";
 
 function TaxEstimator({ user }) {
   const { symbol } = useCurrency();
@@ -197,10 +198,13 @@ function TaxEstimator({ user }) {
           </div>
 
           {result.ai_tip && (
-            <div className="ai-insight">
-              <div className="ai-label">✦ Tax Tip</div>
-              <p>{result.ai_tip}</p>
-            </div>
+            <>
+              <div className="ai-insight">
+                <div className="ai-label">✦ Tax Tip (Groq)</div>
+                <p>{result.ai_tip}</p>
+              </div>
+              <ModelSentimentBadge sentiment={result.model_sentiment} />
+            </>
           )}
         </div>
       )}

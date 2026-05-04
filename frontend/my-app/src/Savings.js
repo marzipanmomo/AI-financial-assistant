@@ -7,6 +7,7 @@ import html2canvas from 'html2canvas';
 import { playClick } from "./sound.js";
 import { saveHistory } from "./saveHistory";
 import { useCurrency } from "./CurrencyContext";
+import ModelSentimentBadge from "./ModelSentimentBadge";
 
 // ✅ prefix passed as prop
 function AnimatedValue({ value, prefix = "" }) {
@@ -176,10 +177,11 @@ function Savings({ user }) {
 
             {result.ai_tip && (
               <div className="ai-insight">
-                <div className="ai-label">✦ AI Tip</div>
+                <div className="ai-label">✦ AI Tip (Groq)</div>
                 <p>{result.ai_tip}</p>
               </div>
             )}
+            <ModelSentimentBadge sentiment={result.model_sentiment} />
           </div>
         )}
       </div>

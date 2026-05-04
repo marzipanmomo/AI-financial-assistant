@@ -8,6 +8,7 @@ import html2canvas from 'html2canvas';
 import { playClick } from "./sound.js";
 import { saveHistory } from "./saveHistory";
 import { useCurrency } from "./CurrencyContext";
+import ModelSentimentBadge from "./ModelSentimentBadge";
 
 const PIE_COLORS = ["#00ff88","#00bcd4","#f59e0b","#e91e63","#9c27b0","#3f51b5","#009688","#ff5722"];
 
@@ -219,10 +220,11 @@ function Budget({ user }) {
 
             {result.ai_insight && (
               <div className="ai-insight">
-                <div className="ai-label">✦ AI Insight</div>
+                <div className="ai-label">✦ AI Insight (Groq)</div>
                 <p>{result.ai_insight}</p>
               </div>
             )}
+            <ModelSentimentBadge sentiment={result.model_sentiment} />
           </div>
         )}
       </div>
