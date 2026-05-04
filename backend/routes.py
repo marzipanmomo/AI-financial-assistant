@@ -1,9 +1,28 @@
 from flask import Blueprint, request, jsonify, Response, stream_with_context
 from ai_helper import get_ai_response, get_ai_response_stream
+from sentiment_model import predict_sentiment, partial_fit_model
+from db import get_db
 import requests as http_requests
 import json
 
 routes = Blueprint('routes', __name__)
+
+
+def _store_and_learn(text: str, label: str, source: str) -> dict:
+    """Run model prediction, persist example to DB, do incremental update. Returns sentiment dict."""
+    sentiment = predict_sentiment(text)
+    try:
+        conn = get_db()
+        conn.execute(
+            "INSERT INTO sentiment_training_data (text, label, source) VALUES (?, ?, ?)",
+            (text, label, source),
+        )
+        conn.commit()
+        conn.close()
+        partial_fit_model(text, label)
+    except Exception as exc:
+        print(f"Sentiment store/learn error: {exc}")
+    return sentiment
 
 
 
@@ -39,13 +58,22 @@ def budget():
     """
     ai_insight = get_ai_response(prompt)
 
+    if savings_rate >= 20:
+        auto_label = "positive"
+    elif savings_rate < 5:
+        auto_label = "negative"
+    else:
+        auto_label = "neutral"
+    model_sentiment = _store_and_learn(ai_insight, auto_label, "budget")
+
     return jsonify({
         'income': income,
         'total_spent': round(total_spent, 2),
         'remaining': round(remaining, 2),
         'savings_rate': savings_rate,
         'breakdown': breakdown,
-        'ai_insight': ai_insight
+        'ai_insight': ai_insight,
+        'model_sentiment': model_sentiment,
     })
 
 
@@ -73,6 +101,15 @@ def savings():
     """
     ai_tip = get_ai_response(prompt)
 
+    progress_pct = (current_savings / goal_amount * 100) if goal_amount > 0 else 0
+    if progress_pct >= 50 or monthly_target <= goal_amount * 0.10:
+        auto_label = "positive"
+    elif monthly_target > goal_amount * 0.40:
+        auto_label = "negative"
+    else:
+        auto_label = "neutral"
+    model_sentiment = _store_and_learn(ai_tip, auto_label, "savings")
+
     return jsonify({
         'goal_amount': goal_amount,
         'current_savings': current_savings,
@@ -81,7 +118,8 @@ def savings():
         'weekly_target': weekly_target,
         'daily_target': daily_target,
         'months': months,
-        'ai_tip': ai_tip
+        'ai_tip': ai_tip,
+        'model_sentiment': model_sentiment,
     })
 
 
@@ -143,6 +181,15 @@ def loan():
     """
     ai_tip = get_ai_response(prompt)
 
+    interest_ratio = (total_interest / principal) if principal > 0 else 0
+    if interest_ratio < 0.20:
+        auto_label = "positive"
+    elif interest_ratio > 0.50:
+        auto_label = "negative"
+    else:
+        auto_label = "neutral"
+    model_sentiment = _store_and_learn(ai_tip, auto_label, "loan")
+
     return jsonify({
         'principal': principal,
         'annual_rate': annual_rate,
@@ -150,7 +197,8 @@ def loan():
         'emi': emi,
         'total_payment': total_payment,
         'total_interest': total_interest,
-        'ai_tip': ai_tip
+        'ai_tip': ai_tip,
+        'model_sentiment': model_sentiment,
     })
 
 
@@ -209,11 +257,20 @@ def networth():
     """
     ai_insight = get_ai_response(prompt)
 
+    if net_worth > 0:
+        auto_label = "positive"
+    elif net_worth < 0:
+        auto_label = "negative"
+    else:
+        auto_label = "neutral"
+    model_sentiment = _store_and_learn(ai_insight, auto_label, "networth")
+
     return jsonify({
         'total_assets': round(total_assets, 2),
         'total_liabilities': round(total_liabilities, 2),
         'net_worth': net_worth,
-        'ai_insight': ai_insight
+        'ai_insight': ai_insight,
+        'model_sentiment': model_sentiment,
     })
 
 
@@ -274,6 +331,14 @@ def investment():
     """
     ai_insight = get_ai_response(prompt)
 
+    if roi >= 30:
+        auto_label = "positive"
+    elif roi < 0:
+        auto_label = "negative"
+    else:
+        auto_label = "neutral"
+    model_sentiment = _store_and_learn(ai_insight, auto_label, "investment")
+
     return jsonify({
         'initial': initial,
         'monthly_contribution': monthly_contribution,
@@ -283,7 +348,8 @@ def investment():
         'total_contributed': total_contributed,
         'total_gains': total_gains,
         'roi': roi,
-        'ai_insight': ai_insight
+        'ai_insight': ai_insight,
+        'model_sentiment': model_sentiment,
     })
 
 # ── 10. AI Chat (streaming with memory) ─────────────────────────────────────
@@ -418,6 +484,14 @@ def tax():
     """
     ai_tip = get_ai_response(prompt)
 
+    if effective_rate < 10:
+        auto_label = "positive"
+    elif effective_rate > 25:
+        auto_label = "negative"
+    else:
+        auto_label = "neutral"
+    model_sentiment = _store_and_learn(ai_tip, auto_label, "tax")
+
     return jsonify({
         'income': income,
         'taxpayer_type': taxpayer_type,
@@ -433,6 +507,7 @@ def tax():
         'monthly_take_home': monthly_take_home,
         'brackets': bracket_details,
         'ai_tip': ai_tip,
+        'model_sentiment': model_sentiment,
     })
 
 # ── Health check ─────────────────────────────────────────────────────────────

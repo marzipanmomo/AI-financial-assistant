@@ -1,4 +1,4 @@
-from sentiment_model import predict_sentiment
+from sentiment_model import predict_sentiment, train_model
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -36,6 +36,16 @@ def analyze_sentiment():
         "confidence":    result["confidence"],
         "probabilities": result["probabilities"]
     }), 200
+
+@app.route("/api/retrain", methods=["POST"])
+def retrain():
+    """Retrain the model from scratch, incorporating all DB-accumulated examples."""
+    try:
+        train_model()
+        return jsonify({"status": "success", "message": "Model retrained successfully."}), 200
+    except Exception as exc:
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)

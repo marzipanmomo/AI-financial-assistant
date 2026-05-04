@@ -1,18 +1,31 @@
 """
 Financial Sentiment Analysis Model
 ====================================
-Trained on 400+ financial phrases using TF-IDF + Logistic Regression.
+Trained on 400+ handcrafted phrases + Financial PhraseBank (2,264 expert-labeled sentences).
+Architecture: HashingVectorizer + SGDClassifier (supports dynamic incremental learning).
 Classifies text as: Positive, Negative, or Neutral.
 """
 
 import pickle
 import os
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
+import numpy as np
+from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, accuracy_score
-import numpy as np
+
+CLASSES = ["negative", "neutral", "positive"]
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "financial_sentiment_model.pkl")
+
+# Stateless vectorizer — same params must be used everywhere (train, predict, partial_fit)
+vectorizer = HashingVectorizer(
+    ngram_range=(1, 2),
+    n_features=2 ** 17,
+    norm="l2",
+    alternate_sign=False,
+    strip_accents="unicode",
+    analyzer="word",
+)
 
 TRAINING_DATA = [
     # POSITIVE
@@ -104,6 +117,19 @@ TRAINING_DATA = [
     ("Operating leverage drove significant margin expansion this year.", "positive"),
     ("The earnings beat triggered a wave of analyst upgrades.", "positive"),
     ("The company completed a successful debt-for-equity swap.", "positive"),
+    # Advisory positive (app-style insights)
+    ("Your savings rate is excellent — you are building wealth effectively.", "positive"),
+    ("Great job maintaining a healthy budget with strong savings this month.", "positive"),
+    ("Your investment strategy is sound and compounding is working in your favor.", "positive"),
+    ("You are well on track to meet your financial goal ahead of schedule.", "positive"),
+    ("Your net worth is positive and growing — excellent financial health.", "positive"),
+    ("This loan has low total interest, making it a very manageable commitment.", "positive"),
+    ("Your emergency fund provides a solid financial safety net.", "positive"),
+    ("Your tax liability is minimal — you are keeping more of your income.", "positive"),
+    ("Diversifying your investments reduces risk and improves long-term returns.", "positive"),
+    ("Your debt-to-income ratio is healthy — you have strong borrowing capacity.", "positive"),
+    ("Paying off this loan early will save you significant interest costs.", "positive"),
+    ("Your budget shows disciplined spending with room left to save and invest.", "positive"),
 
     # NEGATIVE
     ("The company reported a significant net loss this quarter.", "negative"),
@@ -196,6 +222,19 @@ TRAINING_DATA = [
     ("Revenue recognition issues led to a financial restatement.", "negative"),
     ("The company is in technical default on its credit facility.", "negative"),
     ("Declining return on assets signals deteriorating business performance.", "negative"),
+    # Advisory negative (app-style insights)
+    ("Your expenses exceed your income — this is an unsustainable budget.", "negative"),
+    ("Your savings rate is critically low and needs immediate attention.", "negative"),
+    ("This loan carries very high interest and may be difficult to repay.", "negative"),
+    ("Your net worth is negative — liabilities significantly exceed assets.", "negative"),
+    ("Your debt-to-income ratio is dangerously high.", "negative"),
+    ("At this rate you will not reach your savings goal in time.", "negative"),
+    ("Your total interest cost on this loan exceeds half the principal.", "negative"),
+    ("Your tax burden is very high — consider legal deductions immediately.", "negative"),
+    ("You are spending far more than recommended on non-essential expenses.", "negative"),
+    ("Your investment returns are negative — review your strategy.", "negative"),
+    ("Your emergency fund is insufficient to cover even one month of expenses.", "negative"),
+    ("Without reducing expenses you will not be able to meet your financial goals.", "negative"),
 
     # NEUTRAL
     ("The company will release its quarterly earnings report next week.", "neutral"),
@@ -295,66 +334,130 @@ TRAINING_DATA = [
     ("How much of my salary should I allocate to investments?", "neutral"),
     ("What is a fiduciary financial advisor?", "neutral"),
     ("I want to compare different retirement account types.", "neutral"),
+    # Advisory neutral (app-style insights)
+    ("Your savings rate is moderate — there is room for improvement.", "neutral"),
+    ("Your budget is balanced but leaves little margin for unexpected expenses.", "neutral"),
+    ("Consider reviewing your loan terms when the opportunity arises.", "neutral"),
+    ("Your net worth is near zero — focus on building assets over time.", "neutral"),
+    ("The estimated tax is within the average range for your income bracket.", "neutral"),
+    ("Your investment returns are in line with market averages.", "neutral"),
+    ("Your monthly savings target is achievable with consistent effort.", "neutral"),
+    ("Your expenses are within a reasonable range for your income level.", "neutral"),
+    ("Consider consulting a financial advisor to optimize your plan.", "neutral"),
+    ("Your current financial situation is stable with moderate risk.", "neutral"),
 ]
+
+
+def download_phrasebank():
+    """Download Financial PhraseBank (sentences_allagree) from GitHub at training time."""
+    try:
+        import requests as req
+        url = (
+            "https://raw.githubusercontent.com/maxwellsarpong/"
+            "NLP-financial-text-processing-dataset/master/Sentences_AllAgree.txt"
+        )
+        r = req.get(url, timeout=15)
+        r.raise_for_status()
+
+        texts, labels = [], []
+        # Format per line: "Sentence text @label"
+        for line in r.text.strip().split("\n"):
+            line = line.strip()
+            if "@" not in line:
+                continue
+            sentence, label = line.rsplit("@", 1)
+            sentence = sentence.strip()
+            label = label.strip().lower()
+            if label in ("positive", "negative", "neutral") and sentence:
+                texts.append(sentence)
+                labels.append(label)
+
+        print(f"[OK] Downloaded {len(texts)} phrases from Financial PhraseBank")
+        return texts, labels
+    except Exception as exc:
+        print(f"[WARN] Could not download Financial PhraseBank: {exc}")
+        return [], []
+
+
+def _load_db_examples():
+    """Load app-generated training examples accumulated in the database."""
+    try:
+        from db import get_db
+        conn = get_db()
+        rows = conn.execute(
+            "SELECT text, label FROM sentiment_training_data"
+        ).fetchall()
+        conn.close()
+        texts = [r["text"] for r in rows]
+        labels = [r["label"] for r in rows]
+        if texts:
+            print(f"[OK] Loaded {len(texts)} app-generated examples from database")
+        return texts, labels
+    except Exception as exc:
+        print(f"[WARN] Could not load app training data from DB: {exc}")
+        return [], []
 
 
 def train_model():
     texts  = [item[0] for item in TRAINING_DATA]
     labels = [item[1] for item in TRAINING_DATA]
 
+    pb_texts, pb_labels = download_phrasebank()
+    texts  += pb_texts
+    labels += pb_labels
+
+    db_texts, db_labels = _load_db_examples()
+    texts  += db_texts
+    labels += db_labels
+
+    print(f"\nTotal training samples: {len(texts)}")
+
     X_train, X_test, y_train, y_test = train_test_split(
         texts, labels, test_size=0.15, random_state=42, stratify=labels
     )
 
-    pipeline = Pipeline([
-        ("tfidf", TfidfVectorizer(
-            ngram_range=(1, 3),
-            max_features=8000,
-            sublinear_tf=True,
-            strip_accents="unicode",
-            analyzer="word",
-            min_df=1,
-        )),
-        ("clf", LogisticRegression(
-            C=2.0,
-            max_iter=2000,
-            solver="lbfgs",
-            random_state=42,
-        )),
-    ])
+    X_train_vec = vectorizer.transform(X_train)
+    X_test_vec  = vectorizer.transform(X_test)
 
-    pipeline.fit(X_train, y_train)
+    clf = SGDClassifier(
+        loss="log_loss",
+        alpha=0.0001,
+        max_iter=200,
+        random_state=42,
+        class_weight="balanced",
+        n_jobs=-1,
+    )
+    clf.fit(X_train_vec, y_train)
 
-    y_pred   = pipeline.predict(X_test)
+    y_pred   = clf.predict(X_test_vec)
     accuracy = accuracy_score(y_test, y_pred)
-    print("\n✅ Model Training Complete")
+    print(f"\nModel Training Complete")
     print(f"   Training samples : {len(X_train)}")
     print(f"   Test samples     : {len(X_test)}")
     print(f"   Accuracy         : {accuracy * 100:.1f}%")
-    print("\n📊 Classification Report:")
-    print(classification_report(y_test, y_pred, target_names=["negative", "neutral", "positive"]))
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred, target_names=sorted(set(labels))))
 
-    model_path = os.path.join(os.path.dirname(__file__), "financial_sentiment_model.pkl")
-    with open(model_path, "wb") as f:
-        pickle.dump(pipeline, f)
-    print(f"💾 Model saved to: {model_path}")
-    return pipeline
+    with open(MODEL_PATH, "wb") as f:
+        pickle.dump(clf, f)
+    print(f"Model saved to: {MODEL_PATH}")
+    return clf
 
 
 def load_model():
-    model_path = os.path.join(os.path.dirname(__file__), "financial_sentiment_model.pkl")
-    if not os.path.exists(model_path):
-        print("⚙️  Model not found. Training now...")
+    if not os.path.exists(MODEL_PATH):
+        print("[INFO] Model not found. Training now...")
         return train_model()
-    with open(model_path, "rb") as f:
+    with open(MODEL_PATH, "rb") as f:
         return pickle.load(f)
 
 
 def predict_sentiment(text: str) -> dict:
-    model      = load_model()
-    label      = model.predict([text])[0]
-    proba      = model.predict_proba([text])[0]
-    classes    = model.classes_
+    clf        = load_model()
+    X          = vectorizer.transform([text])
+    label      = clf.predict(X)[0]
+    proba      = clf.predict_proba(X)[0]
+    classes    = clf.classes_
     confidence = float(np.max(proba))
     proba_dict = {cls: round(float(p), 4) for cls, p in zip(classes, proba)}
     emoji_map  = {"positive": "🟢", "negative": "🔴", "neutral": "🟡"}
@@ -364,6 +467,20 @@ def predict_sentiment(text: str) -> dict:
         "confidence":    round(confidence * 100, 1),
         "probabilities": proba_dict,
     }
+
+
+def partial_fit_model(text: str, label: str):
+    """Update the model incrementally with a single new labeled example."""
+    if label not in CLASSES:
+        return
+    try:
+        clf = load_model()
+        X   = vectorizer.transform([text])
+        clf.partial_fit(X, [label], classes=CLASSES)
+        with open(MODEL_PATH, "wb") as f:
+            pickle.dump(clf, f)
+    except Exception as exc:
+        print(f"[WARN] partial_fit failed: {exc}")
 
 
 if __name__ == "__main__":
@@ -376,12 +493,15 @@ if __name__ == "__main__":
         "I want to compare different savings account options.",
         "Revenue declined sharply as customer demand weakened.",
         "The firm successfully expanded into new markets this year.",
-        "The Federal Reserve will meet next Tuesday.",
+        "Your savings rate is excellent — keep it up!",
+        "Your expenses exceed your income — this is unsustainable.",
+        "Your budget looks balanced with moderate savings.",
     ]
-    print("\n🧪 Sample Predictions:")
-    print("─" * 65)
+    print("\nSample Predictions:")
+    print("-" * 65)
     for text in test_cases:
         result = predict_sentiment(text)
         print(f"  Input     : {text}")
-        print(f"  Sentiment : {result['emoji']} {result['label'].upper()} ({result['confidence']}% confidence)")
+        print(f"  Sentiment : {result['label'].upper()} ({result['confidence']}% confidence)")
+        print("-" * 65)
         print("─" * 65)
